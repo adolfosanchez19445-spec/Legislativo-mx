@@ -444,12 +444,15 @@ if ("serviceWorker" in navigator) {
 }
 </script>
 
+<script src="./catalogo-juridico.js"></script>
+<script src="./dof.js?v=9"></script>
+
 <script>
-  alert("JURIA: " + CATALOGO_JURIDICO.materias.length + " materias cargadas correctamente");
-</script>
-<script src="./dof.js?v=8"></script>
-<script>
-  alert("La página de LEGISLATIVO MX está actualizada");
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js")
+      .then(() => console.log("Service Worker registrado"))
+      .catch(error => console.error("Error:", error));
+  }
 </script>
 </body>
 </html>
