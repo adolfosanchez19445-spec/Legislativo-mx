@@ -108,30 +108,180 @@ const CLASIFICACION = {
   ]
 };
 
-// Clasificación con puntuación y motivos.
+// Clasificación jurídica mejorada.
 function clasificarPublicacion(texto) {
   const contenido = normalizarTexto(texto);
 
+  const reglas = {
+    Penal: {
+      fuertes: [
+        "codigo penal",
+        "derecho penal",
+        "materia penal",
+        "codigo nacional de procedimientos penales",
+        "proceso penal",
+        "carpeta de investigacion",
+        "delincuencia organizada",
+        "delitos contra",
+        "ley nacional de ejecucion penal",
+        "justicia penal",
+        "feminicidio",
+        "homicidio"
+      ],
+      debiles: [
+        "delito", "delitos", "robo", "fraude",
+        "extorsion", "ministerio publico"
+      ]
+    },
+
+    Laboral: {
+      fuertes: [
+        "ley federal del trabajo",
+        "derecho laboral",
+        "materia laboral",
+        "contrato colectivo de trabajo",
+        "relaciones laborales",
+        "justicia laboral",
+        "tribunal laboral",
+        "riesgos de trabajo",
+        "reparto de utilidades"
+      ],
+      debiles: [
+        "trabajador", "trabajadores", "sindicato",
+        "salario", "jornada laboral", "prestaciones"
+      ]
+    },
+
+    Fiscal: {
+      fuertes: [
+        "codigo fiscal de la federacion",
+        "ley del impuesto sobre la renta",
+        "ley del impuesto al valor agregado",
+        "derecho fiscal",
+        "materia fiscal",
+        "creditos fiscales",
+        "obligaciones fiscales",
+        "administracion tributaria"
+      ],
+      debiles: [
+        "impuestos", "contribuciones", "recaudacion",
+        "declaracion fiscal", "autoridad fiscal"
+      ]
+    },
+
+    Familiar: {
+      fuertes: [
+        "derecho familiar",
+        "materia familiar",
+        "codigo familiar",
+        "derecho de familia",
+        "pension alimenticia",
+        "guarda y custodia",
+        "patria potestad",
+        "violencia familiar",
+        "filiacion"
+      ],
+      debiles: [
+        "divorcio", "matrimonio", "adopcion",
+        "tutela", "alimentos"
+      ]
+    },
+
+    Constitucional: {
+      fuertes: [
+        "derecho constitucional",
+        "materia constitucional",
+        "constitucion politica de los estados unidos mexicanos",
+        "reforma constitucional",
+        "controversia constitucional",
+        "accion de inconstitucionalidad",
+        "juicio de amparo",
+        "derechos fundamentales"
+      ],
+      debiles: [
+        "derechos humanos", "poder legislativo",
+        "poder ejecutivo", "poder judicial",
+        "garantias constitucionales"
+      ]
+    },
+
+    Administrativo: {
+      fuertes: [
+        "derecho administrativo",
+        "materia administrativa",
+        "procedimiento administrativo",
+        "acto administrativo",
+        "responsabilidad administrativa",
+        "administracion publica",
+        "contratacion publica",
+        "licitacion publica"
+      ],
+      debiles: [
+        "servidores publicos", "dependencia",
+        "concesiones", "sanciones administrativas",
+        "organos administrativos"
+      ]
+    },
+
+    Civil: {
+      fuertes: [
+        "derecho civil",
+        "materia civil",
+        "codigo civil",
+        "responsabilidad civil",
+        "contrato civil",
+        "sucesion testamentaria",
+        "sucesion intestamentaria",
+        "derechos reales"
+      ],
+      debiles: [
+        "arrendamiento", "bienes inmuebles",
+        "obligaciones civiles", "patrimonio"
+      ]
+    },
+
+    Mercantil: {
+      fuertes: [
+        "derecho mercantil",
+        "materia mercantil",
+        "codigo de comercio",
+        "concurso mercantil",
+        "sociedades mercantiles",
+        "titulos de credito",
+        "contratos mercantiles",
+        "operaciones mercantiles"
+      ],
+      debiles: [
+        "sociedad anonima", "comercio exterior",
+        "actividad empresarial", "instituciones de credito"
+      ]
+    }
+  };
+
   const detalles = [];
 
-  for (const [materia, palabras] of Object.entries(CLASIFICACION)) {
-    const coincidencias = palabras.filter(palabra =>
+  for (const [materia, grupos] of Object.entries(reglas)) {
+    const coincidenciasFuertes = grupos.fuertes.filter(palabra =>
       contenido.includes(normalizarTexto(palabra))
     );
 
-    if (coincidencias.length === 0) continue;
+    const coincidenciasDebiles = grupos.debiles.filter(palabra =>
+      contenido.includes(normalizarTexto(palabra))
+    );
 
-    // Las expresiones de varias palabras tienen mayor peso.
-    const puntuacion = coincidencias.reduce((total, palabra) => {
-      const peso = palabra.trim().split(/\s+/).length >= 2 ? 3 : 1;
-      return total + peso;
-    }, 0);
+    const puntuacion =
+      coincidenciasFuertes.reduce((total, palabra) =>
+        total + (normalizarTexto(palabra).split(" ").length >= 2 ? 4 : 3), 0
+      ) +
+      coincidenciasDebiles.length;
+
+    if (puntuacion === 0) continue;
 
     let confianza = "baja";
 
-    if (puntuacion >= 6) {
+    if (puntuacion >= 7) {
       confianza = "alta";
-    } else if (puntuacion >= 3) {
+    } else if (puntuacion >= 4) {
       confianza = "media";
     }
 
@@ -139,18 +289,19 @@ function clasificarPublicacion(texto) {
       materia,
       puntuacion,
       confianza,
-      motivos: coincidencias
+      motivos: [
+        ...coincidenciasFuertes,
+        ...coincidenciasDebiles
+      ]
     });
   }
 
-  // Solo se asignan como materias identificadas
-  // las que alcanzan una puntuación mínima de 3.
   const materias = detalles
-    .filter(detalle => detalle.puntuacion >= 3)
+    .filter(detalle => detalle.puntuacion >= 4)
     .map(detalle => detalle.materia);
 
   const candidatas = detalles
-    .filter(detalle => detalle.puntuacion < 3);
+    .filter(detalle => detalle.puntuacion < 4);
 
   return {
     materias,
@@ -158,6 +309,9 @@ function clasificarPublicacion(texto) {
     detalles
   };
 }
+
+    
+   
 
 function extraerTextoHTML(html) {
   if (!html) return "";
