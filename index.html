@@ -1,192 +1,242 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-MX">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LEGISLATIVO MX</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#102747">
+  <title>LEGISLATIVO MX | Monitor Legislativo</title>
 
-<style>
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+  <meta name="description" content="Consulta novedades legislativas, reformas y publicaciones oficiales de México.">
+  <meta name="theme-color" content="#102747">
 
-body {
-  font-family: Arial, sans-serif;
-  background: #f3f5f8;
-  color: #202b3c;
-}
+  <link rel="manifest" href="./manifest.json">
 
-header {
-  background: #102747;
-  color: white;
-  padding: 24px 7%;
-  border-bottom: 4px solid #c5a45b;
-}
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-.logo {
-  font-size: 27px;
-  font-weight: bold;
-  letter-spacing: 1px;
-}
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f3f5f8;
+      color: #243247;
+      line-height: 1.6;
+    }
 
-.logo span {
-  color: #d7b968;
-}
+    header {
+      background: #102747;
+      color: white;
+      text-align: center;
+      padding: 28px 15px;
+    }
 
-header p {
-  margin-top: 7px;
-  color: #d8dfeb;
-  font-size: 13px;
-}
+    .logo {
+      font-size: 30px;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
 
-nav {
-  background: white;
-  padding: 16px 7%;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-  border-bottom: 1px solid #ddd;
-}
+    .logo span {
+      color: #d6b45d;
+    }
 
-nav a {
-  text-decoration: none;
-  color: #102747;
-  font-weight: bold;
-  font-size: 14px;
-}
+    header p {
+      font-size: 12px;
+      letter-spacing: 2px;
+      margin-top: 5px;
+    }
 
-.hero {
-  background: #102747;
-  color: white;
-  padding: 48px 7%;
-}
+    nav {
+      background: #18385f;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 25px;
+      padding: 13px;
+    }
 
-.hero h1 {
-  font-size: 32px;
-  margin-bottom: 12px;
-}
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-size: 14px;
+    }
 
-.hero p {
-  color: #dce3ee;
-  max-width: 600px;
-  line-height: 1.6;
-}
+    nav a:hover {
+      color: #d6b45d;
+    }
 
-main {
-  max-width: 1100px;
-  margin: 35px auto;
-  padding: 0 20px;
-}
+    .hero {
+      background: linear-gradient(135deg, #102747, #244b78);
+      color: white;
+      padding: 55px 20px;
+      text-align: center;
+    }
 
-.section-title {
-  margin-bottom: 20px;
-  color: #102747;
-}
+    .hero h1 {
+      font-size: 34px;
+      line-height: 1.25;
+      margin-bottom: 15px;
+    }
 
-.tools {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 25px;
-}
+    .hero p {
+      max-width: 650px;
+      margin: auto;
+      color: #e3eaf2;
+    }
 
-input, select {
-  padding: 13px;
-  border: 1px solid #ccd2dc;
-  border-radius: 7px;
-  background: white;
-  font-size: 14px;
-}
+    main {
+      max-width: 1100px;
+      margin: 35px auto;
+      padding: 0 20px;
+    }
 
-input {
-  flex: 1;
-  min-width: 220px;
-}
+    .section-title {
+      color: #102747;
+      font-size: 24px;
+      margin-bottom: 20px;
+      border-left: 5px solid #d6b45d;
+      padding-left: 12px;
+    }
 
-#dof-status {
-  padding: 15px 0;
-  color: #102747;
-  line-height: 1.5;
-}
+    .tools {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
 
-.news {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 18px;
-}
+    input,
+    select {
+      padding: 13px;
+      border: 1px solid #cbd3df;
+      border-radius: 6px;
+      font-size: 14px;
+      background: white;
+      min-width: 220px;
+    }
 
-.card {
-  background: white;
-  padding: 22px;
-  border-radius: 10px;
-  border: 1px solid #e0e4ea;
-  box-shadow: 0 3px 12px #00000008;
-}
+    input {
+      flex: 1;
+    }
 
-.card h3 {
-  color: #102747;
-  margin-bottom: 12px;
-  font-size: 18px;
-}
+    #dof-status {
+      background: white;
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 18px;
+      border-left: 4px solid #d6b45d;
+      color: #33445b;
+    }
 
-.card p {
-  color: #657184;
-  font-size: 14px;
-  line-height: 1.6;
-  margin-bottom: 15px;
-}
+    .news {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+    }
 
-.card small {
-  display: block;
-  color: #8b929e;
-  margin-bottom: 12px;
-}
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 7px;
+      border: 1px solid #e0e5ec;
+      box-shadow: 0 3px 10px rgba(16, 39, 71, 0.05);
+    }
 
-.card a {
-  color: #174d83;
-  font-weight: bold;
-  font-size: 14px;
-  text-decoration: none;
-}
+    .card h3 {
+      color: #102747;
+      font-size: 17px;
+      margin-bottom: 12px;
+    }
 
-.card a:hover {
-  text-decoration: underline;
-}
+    .card p {
+      color: #526174;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
 
-.notice {
-  margin-top: 25px;
-  padding: 15px;
-  background: #fff8e7;
-  border-left: 4px solid #c5a45b;
-  color: #665326;
-  font-size: 13px;
-  line-height: 1.5;
-}
+    .card small {
+      display: block;
+      color: #697789;
+      margin-bottom: 14px;
+    }
 
-footer {
-  margin-top: 50px;
-  background: #102747;
-  color: white;
-  padding: 28px 7%;
-  text-align: center;
-  font-size: 13px;
-}
+    .card a {
+      display: inline-block;
+      color: #174d83;
+      font-weight: bold;
+      font-size: 14px;
+      text-decoration: none;
+    }
 
-@media(max-width:600px) {
-  .hero h1 {
-    font-size: 25px;
-  }
+    .card a:hover {
+      text-decoration: underline;
+    }
 
-  nav {
-    gap: 15px;
-  }
-}
-</style>
+    .notice {
+      margin-top: 25px;
+      padding: 15px;
+      background: #e9eef5;
+      border-radius: 6px;
+      color: #43546a;
+      font-size: 13px;
+    }
+
+    .materias,
+    .fuentes {
+      margin-top: 35px;
+      background: white;
+      padding: 22px;
+      border-radius: 7px;
+    }
+
+    .materias p {
+      line-height: 2;
+    }
+
+    .fuentes a {
+      color: #174d83;
+    }
+
+    footer {
+      background: #102747;
+      color: white;
+      text-align: center;
+      padding: 25px 15px;
+      margin-top: 50px;
+      font-size: 14px;
+    }
+
+    footer p {
+      color: #d5deea;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+
+    @media (max-width: 600px) {
+      .logo {
+        font-size: 25px;
+      }
+
+      .hero h1 {
+        font-size: 27px;
+      }
+
+      nav {
+        gap: 15px;
+      }
+
+      nav a {
+        font-size: 13px;
+      }
+
+      input,
+      select {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -236,7 +286,7 @@ footer {
   </div>
 
   <div id="dof-status">
-    Preparando consulta de los últimos 7 días...
+    Preparando consulta del Diario Oficial de la Federación...
   </div>
 
   <div id="dof-results" class="news"></div>
@@ -247,7 +297,7 @@ footer {
     automático de nuevas reformas se encuentran en desarrollo.
   </div>
 
-  <section id="materias" style="margin-top:35px">
+  <section id="materias" class="materias">
     <h2 class="section-title">Materias jurídicas</h2>
     <p>
       Penal · Laboral · Familiar · Fiscal · Constitucional ·
@@ -255,12 +305,14 @@ footer {
     </p>
   </section>
 
-  <section id="fuentes" style="margin-top:30px">
+  <section id="fuentes" class="fuentes">
     <h2 class="section-title">Fuentes oficiales</h2>
     <p>
-      <a href="https://www.dof.gob.mx/"
-         target="_blank"
-         rel="noopener noreferrer">
+      <a
+        href="https://www.dof.gob.mx/"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         Diario Oficial de la Federación
       </a>
     </p>
@@ -285,10 +337,9 @@ function filterNews() {
 
   cards.forEach(card => {
     const text = card.innerText.toLowerCase();
-
     const matchesText = text.includes(term);
 
-    // La clasificación jurídica se incorporará posteriormente.
+    // La clasificación jurídica se implementará posteriormente.
     const matchesCategory = selected === "todos";
 
     card.style.display =
