@@ -121,6 +121,20 @@
       flex: 1;
     }
 
+    #search-button {
+      padding: 13px 25px;
+      background: #102747;
+      color: white;
+      border: none;
+      border-radius: 7px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #search-button:hover {
+      background: #244b78;
+    }
+
     #dof-status {
       background: white;
       padding: 15px;
@@ -235,20 +249,11 @@
       select {
         width: 100%;
       }
-    }
-    #search-button {
-  padding: 13px 25px;
-  background: #102747;
-  color: white;
-  border: none;
-  border-radius: 7px;
-  font-weight: bold;
-  cursor: pointer;
-}
 
-#search-button:hover {
-  background: #244b78;
-}
+      #search-button {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 
@@ -279,17 +284,17 @@
   <h2 class="section-title">Monitor legislativo</h2>
 
   <div class="tools">
-  <input
-    type="text"
-    id="search"
-    placeholder="Buscar leyes, reformas o temas..."
-  >
+    <input
+      type="text"
+      id="search"
+      placeholder="Buscar leyes, reformas o temas..."
+    >
 
-  <button type="button" id="search-button">
-    BUSCAR
-  </button>
+    <button type="button" id="search-button">
+      BUSCAR
+    </button>
 
-  <select id="category">
+    <select id="category">
       <option value="todos">Todas las materias</option>
       <option value="Penal">Derecho penal</option>
       <option value="Laboral">Derecho laboral</option>
@@ -341,11 +346,56 @@
   LEGISLATIVO MX © 2026
   <p>Información legislativa de México</p>
 </footer>
-document.getElementById("search-button")
-  .addEventListener("click", filterNews);
+
 <script>
 const search = document.getElementById("search");
 const category = document.getElementById("category");
+
+const palabrasPorMateria = {
+  Penal: [
+    "penal", "delito", "delincuencia", "feminicidio",
+    "homicidio", "robo", "criminal", "justicia penal"
+  ],
+
+  Laboral: [
+    "laboral", "trabajo", "trabajador", "trabajadores",
+    "sindicato", "salario", "salarios", "prestaciones",
+    "seguridad social"
+  ],
+
+  Fiscal: [
+    "fiscal", "impuesto", "impuestos", "tributario",
+    "contribuciones", "sat", "isr", "iva"
+  ],
+
+  Familiar: [
+    "familiar", "familia", "divorcio", "matrimonio",
+    "alimentos", "pensión alimenticia", "adopción",
+    "filiación"
+  ],
+
+  Constitucional: [
+    "constitución", "constitucional", "derechos humanos",
+    "garantías", "reforma constitucional", "amparo"
+  ],
+
+  Administrativo: [
+    "administrativo", "administración pública",
+    "secretaría", "dependencia", "servidores públicos",
+    "concesión", "reglamento"
+  ],
+
+  Civil: [
+    "civil", "contrato civil", "responsabilidad civil",
+    "propiedad", "arrendamiento", "sucesión"
+  ],
+
+  Mercantil: [
+    "mercantil", "comercio", "comercial", "sociedades",
+    "sociedad anónima", "títulos de crédito",
+    "concurso mercantil"
+  ]
+};
 
 function filterNews() {
   const term = search.value.toLowerCase().trim();
@@ -355,15 +405,22 @@ function filterNews() {
 
   cards.forEach(card => {
     const text = card.innerText.toLowerCase();
+
     const matchesText = text.includes(term);
 
-    // La clasificación jurídica se implementará posteriormente.
-    const matchesCategory = selected === "todos";
+    const palabras = palabrasPorMateria[selected] || [];
+
+    const matchesCategory =
+      selected === "todos" ||
+      palabras.some(palabra => text.includes(palabra));
 
     card.style.display =
       matchesText && matchesCategory ? "block" : "none";
   });
 }
+
+document.getElementById("search-button")
+  .addEventListener("click", filterNews);
 
 search.addEventListener("input", filterNews);
 category.addEventListener("change", filterNews);
