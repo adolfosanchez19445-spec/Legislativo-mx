@@ -295,15 +295,18 @@
     </button>
 
     <select id="category">
-      <option value="todos">Todas las materias</option>
-      <option value="Penal">Derecho penal</option>
-      <option value="Laboral">Derecho laboral</option>
-      <option value="Fiscal">Derecho fiscal</option>
-      <option value="Familiar">Derecho familiar</option>
-      <option value="Constitucional">Derecho constitucional</option>
-      <option value="Administrativo">Derecho administrativo</option>
-      <option value="Civil">Derecho civil</option>
-      <option value="Mercantil">Derecho mercantil</option>
+  <option value="todos">Todas las publicaciones</option>
+  <option value="Penal">Derecho penal</option>
+  <option value="Laboral">Derecho laboral</option>
+  <option value="Fiscal">Derecho fiscal</option>
+  <option value="Familiar">Derecho familiar</option>
+  <option value="Constitucional">Derecho constitucional</option>
+  <option value="Administrativo">Derecho administrativo</option>
+  <option value="Civil">Derecho civil</option>
+  <option value="Mercantil">Derecho mercantil</option>
+  <option value="otras">Otras publicaciones</option>
+  <option value="pendientes">Pendientes de clasificación</option>
+</select>
     </select>
   </div>
 
@@ -405,14 +408,19 @@ function filterNews() {
 
   cards.forEach(card => {
     const text = card.innerText.toLowerCase();
+    const materias = (card.dataset.materias || "").split("|");
 
     const matchesText = text.includes(term);
 
-    const palabras = palabrasPorMateria[selected] || [];
+    let matchesCategory = true;
 
-    const matchesCategory =
-      selected === "todos" ||
-      palabras.some(palabra => text.includes(palabra));
+    if (selected === "otras") {
+      matchesCategory = card.dataset.clasificacion === "otras";
+    } else if (selected === "pendientes") {
+      matchesCategory = card.dataset.clasificacion === "pendientes";
+    } else if (selected !== "todos") {
+      matchesCategory = materias.includes(selected);
+    }
 
     card.style.display =
       matchesText && matchesCategory ? "block" : "none";
