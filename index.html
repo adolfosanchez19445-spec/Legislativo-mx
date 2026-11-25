@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LEGISLATIVO MX</title>
-
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#102747">
 <style>
 * {
   box-sizing: border-box;
@@ -298,6 +299,14 @@ function filterNews() {
 search.addEventListener("input", filterNews);
 category.addEventListener("change", filterNews);
 </script>
-
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js")
+      .then(() => console.log("LEGISLATIVO MX está listo"))
+      .catch(error => console.error("Error:", error));
+  });
+}
+</script>
 </body>
 </html>
