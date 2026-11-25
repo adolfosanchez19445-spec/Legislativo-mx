@@ -108,7 +108,7 @@ const CLASIFICACION = {
   ]
 };
 
-// Clasificación jurídica mejorada.
+// Clasificación jurídica por materias.
 function clasificarPublicacion(texto) {
   const contenido = normalizarTexto(texto);
 
@@ -271,7 +271,9 @@ function clasificarPublicacion(texto) {
 
     const puntuacion =
       coincidenciasFuertes.reduce((total, palabra) =>
-        total + (normalizarTexto(palabra).split(" ").length >= 2 ? 4 : 3), 0
+        total + (
+          normalizarTexto(palabra).split(" ").length >= 2 ? 4 : 3
+        ), 0
       ) +
       coincidenciasDebiles.length;
 
@@ -310,8 +312,199 @@ function clasificarPublicacion(texto) {
   };
 }
 
-    
-   
+// Identificación del tipo de documento jurídico.
+function detectarTipoDocumental(nota, texto) {
+  const titulo = normalizarTexto(nota.titulo || "");
+  const contenido = normalizarTexto(texto || "");
+
+  const tipos = [
+    {
+      tipo: "Tratado internacional",
+      grupo: "Internacional",
+      claves: [
+        "tratado internacional",
+        "tratado de",
+        "convenio internacional"
+      ]
+    },
+    {
+      tipo: "Convención",
+      grupo: "Internacional",
+      claves: [
+        "convencion internacional",
+        "convencion sobre"
+      ]
+    },
+    {
+      tipo: "Jurisprudencia",
+      grupo: "Judicial",
+      claves: [
+        "jurisprudencia",
+        "jurisprudencia por reiteracion"
+      ]
+    },
+    {
+      tipo: "Tesis aislada",
+      grupo: "Judicial",
+      claves: ["tesis aislada"]
+    },
+    {
+      tipo: "Sentencia",
+      grupo: "Judicial",
+      claves: [
+        "sentencia",
+        "resolucion judicial"
+      ]
+    },
+    {
+      tipo: "Ejecutoria",
+      grupo: "Judicial",
+      claves: ["ejecutoria"]
+    },
+    {
+      tipo: "Acuerdo judicial",
+      grupo: "Judicial",
+      claves: [
+        "acuerdo general del consejo de la judicatura",
+        "acuerdo del tribunal"
+      ]
+    },
+    {
+      tipo: "Constitución",
+      grupo: "Legislativo",
+      claves: ["constitucion politica"]
+    },
+    {
+      tipo: "Código",
+      grupo: "Legislativo",
+      claves: [
+        "codigo penal",
+        "codigo civil",
+        "codigo de comercio",
+        "codigo nacional",
+        "codigo fiscal"
+      ]
+    },
+    {
+      tipo: "Decreto",
+      grupo: "Legislativo",
+      claves: [
+        "decreto por el que",
+        "decreto que reforma",
+        "decreto por el cual"
+      ]
+    },
+    {
+      tipo: "Reforma o adición legislativa",
+      grupo: "Legislativo",
+      claves: [
+        "reforma",
+        "adicion",
+        "derogacion",
+        "abrogacion"
+      ]
+    },
+    {
+      tipo: "Ley",
+      grupo: "Legislativo",
+      claves: [
+        "ley federal",
+        "ley general",
+        "ley organica",
+        "ley nacional",
+        "ley de"
+      ]
+    },
+    {
+      tipo: "Reglamento",
+      grupo: "Legislativo",
+      claves: [
+        "reglamento de",
+        "reglamento interior"
+      ]
+    },
+    {
+      tipo: "Convenio",
+      grupo: "Administrativo",
+      claves: [
+        "convenio",
+        "convenio marco"
+      ]
+    },
+    {
+      tipo: "Acuerdo administrativo",
+      grupo: "Administrativo",
+      claves: [
+        "acuerdo por el que",
+        "acuerdo mediante el cual",
+        "acuerdo que establece"
+      ]
+    },
+    {
+      tipo: "Circular",
+      grupo: "Administrativo",
+      claves: ["circular"]
+    },
+    {
+      tipo: "Lineamiento",
+      grupo: "Administrativo",
+      claves: [
+        "lineamientos",
+        "lineamiento"
+      ]
+    },
+    {
+      tipo: "Norma oficial",
+      grupo: "Administrativo",
+      claves: [
+        "norma oficial mexicana",
+        "nom-"
+      ]
+    },
+    {
+      tipo: "Regla de operación",
+      grupo: "Administrativo",
+      claves: ["reglas de operacion"]
+    },
+    {
+      tipo: "Iniciativa de ley",
+      grupo: "Legislativo",
+      claves: [
+        "iniciativa de ley",
+        "iniciativa con proyecto de decreto"
+      ]
+    }
+  ];
+
+  // Primero se analiza el título.
+  for (const item of tipos) {
+    if (item.claves.some(clave => titulo.includes(clave))) {
+      return {
+        ...item,
+        confianza: "Alta",
+        motivo: "Identificado en el título"
+      };
+    }
+  }
+
+  // Después se analiza el contenido.
+  for (const item of tipos) {
+    if (item.claves.some(clave => contenido.includes(clave))) {
+      return {
+        ...item,
+        confianza: "Media",
+        motivo: "Identificado en el contenido"
+      };
+    }
+  }
+
+  return {
+    tipo: "No determinado",
+    grupo: "Pendiente de clasificación",
+    confianza: "Baja",
+    motivo: "No se encontraron elementos suficientes"
+  };
+}
 
 function extraerTextoHTML(html) {
   if (!html) return "";
@@ -368,6 +561,20 @@ function crearTarjeta(nota, resultado, contenidoDisponible) {
         ? "otras"
         : "pendientes";
 
+  const textoCompleto = [
+    nota.titulo,
+    nota.nombreCodOrgaUno,
+    nota.codOrgaDos
+  ].join(" ");
+
+  const tipoDocumento = detectarTipoDocumental(
+    nota,
+    textoCompleto
+  );
+
+  tarjeta.dataset.tipoDocumento = tipoDocumento.tipo;
+  tarjeta.dataset.grupoDocumental = tipoDocumento.grupo;
+
   const titulo = document.createElement("h3");
   titulo.textContent = nota.titulo;
 
@@ -376,6 +583,12 @@ function crearTarjeta(nota, resultado, contenidoDisponible) {
     nota.codOrgaDos ||
     nota.nombreCodOrgaUno ||
     "Diario Oficial de la Federación";
+
+  const tipo = document.createElement("p");
+  tipo.textContent =
+    `Tipo de documento: ${tipoDocumento.tipo}. ` +
+    `Grupo: ${tipoDocumento.grupo}. ` +
+    `Confianza: ${tipoDocumento.confianza}.`;
 
   const clasificacion = document.createElement("p");
 
@@ -435,6 +648,7 @@ function crearTarjeta(nota, resultado, contenidoDisponible) {
   tarjeta.append(
     titulo,
     organismo,
+    tipo,
     clasificacion,
     fecha,
     enlace
@@ -457,7 +671,7 @@ async function consultarDOF() {
   let publicaciones = [];
   let errores = 0;
 
-  // Consultar las publicaciones de los últimos siete días.
+  // Consultar publicaciones de los últimos siete días.
   for (let i = 0; i < DIAS_CONSULTA; i++) {
     const fecha = obtenerFecha(i);
 
