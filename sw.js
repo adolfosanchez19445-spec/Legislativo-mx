@@ -1,9 +1,11 @@
-const CACHE_NAME = "legislativo-mx-v1";
+const CACHE_NAME = "legislativo-mx-v2";
 
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
-  "./manifest.json"
+  "./manifest.json",
+  "./catalogo-juridico.js",
+  "./dof.js?v=8"
 ];
 
 self.addEventListener("install", event => {
@@ -36,7 +38,10 @@ self.addEventListener("fetch", event => {
   event.respondWith(
     fetch(event.request)
       .then(response => {
-        if (response.ok && new URL(event.request.url).origin === self.location.origin) {
+        if (
+          response.ok &&
+          new URL(event.request.url).origin === self.location.origin
+        ) {
           const copy = response.clone();
 
           caches.open(CACHE_NAME).then(cache => {
