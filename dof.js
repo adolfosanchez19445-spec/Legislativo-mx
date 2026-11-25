@@ -1,125 +1,312 @@
-const DOF_API = "https://sidof.segob.gob.mx/dof/sidof";
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LEGISLATIVO MX</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#102747">
 
-function obtenerFecha(diasAtras = 0) {
-  const fecha = new Date();
-  fecha.setDate(fecha.getDate() - diasAtras);
-
-  const dia = String(fecha.getDate()).padStart(2, "0");
-  const mes = String(fecha.getMonth() + 1).padStart(2, "0");
-
-  return `${dia}-${mes}-${fecha.getFullYear()}`;
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-async function consultarDOF() {
-  const estado = document.getElementById("dof-status");
-  const resultados = document.getElementById("dof-results");
+body {
+  font-family: Arial, sans-serif;
+  background: #f3f5f8;
+  color: #202b3c;
+}
 
-  estado.textContent = "Consultando el archivo del DOF de los últimos 365 días...";
-  resultados.replaceChildren();
+header {
+  background: #102747;
+  color: white;
+  padding: 24px 7%;
+  border-bottom: 4px solid #c5a45b;
+}
 
-  let publicaciones = [];
-  let errores = 0;
+.logo {
+  font-size: 27px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
 
-  try {
-    for (let i = 0; i < 365; i++) {
-      const fecha = obtenerFecha(i);
+.logo span {
+  color: #d7b968;
+}
 
-      try {
-        const respuesta = await fetch(`${DOF_API}/notas/${fecha}`);
+header p {
+  margin-top: 7px;
+  color: #d8dfeb;
+  font-size: 13px;
+}
 
-        if (!respuesta.ok) {
-          errores++;
-          continue;
-        }
+nav {
+  background: white;
+  padding: 16px 7%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  border-bottom: 1px solid #ddd;
+}
 
-        const datos = await respuesta.json();
+nav a {
+  text-decoration: none;
+  color: #102747;
+  font-weight: bold;
+  font-size: 14px;
+}
 
-        const notas = [
-          ...(datos.NotasMatutinas || []),
-          ...(datos.NotasVespertinas || []),
-          ...(datos.NotasExtraordinarias || [])
-        ];
+.hero {
+  background: #102747;
+  color: white;
+  padding: 48px 7%;
+}
 
-        notas.forEach(nota => {
-          if (nota.titulo && nota.codNota) {
-            publicaciones.push({
-              ...nota,
-              fechaConsulta: fecha
-            });
-          }
-        });
+.hero h1 {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
 
-      } catch (error) {
-        errores++;
-      }
+.hero p {
+  color: #dce3ee;
+  max-width: 600px;
+  line-height: 1.6;
+}
 
-      if (i % 10 === 0 || i === 364) {
-        estado.textContent =
-          `Consultando DOF: ${i + 1} de 365 días...`;
-      }
+main {
+  max-width: 1100px;
+  margin: 35px auto;
+  padding: 0 20px;
+}
 
-      // Pequeña pausa para no saturar el servicio.
-      await new Promise(resolve => setTimeout(resolve, 150));
-    }
+.section-title {
+  margin-bottom: 20px;
+  color: #102747;
+}
 
-    if (publicaciones.length === 0) {
-      estado.textContent =
-        "No se encontraron publicaciones. Errores de consulta: " + errores;
-      return;
-    }
+.tools {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 25px;
+}
 
-    // Ordenar de la más reciente a la más antigua.
-    publicaciones.sort((a, b) => {
-      const fechaA = a.fechaConsulta.split("-").reverse().join("-");
-      const fechaB = b.fechaConsulta.split("-").reverse().join("-");
-      return fechaB.localeCompare(fechaA);
-    });
+input, select {
+  padding: 13px;
+  border: 1px solid #ccd2dc;
+  border-radius: 7px;
+  background: white;
+  font-size: 14px;
+}
 
-    estado.textContent =
-      `${publicaciones.length} publicaciones encontradas en los últimos 365 días.`;
+input {
+  flex: 1;
+  min-width: 220px;
+}
 
-    const fragmento = document.createDocumentFragment();
+#dof-status {
+  grid-column: 1 / -1;
+  padding: 15px;
+  color: #102747;
+  line-height: 1.5;
+}
 
-    publicaciones.forEach(nota => {
-      const tarjeta = document.createElement("article");
-      tarjeta.className = "card";
+.news {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
 
-      const titulo = document.createElement("h3");
-      titulo.textContent = nota.titulo;
+.card {
+  background: white;
+  padding: 22px;
+  border-radius: 10px;
+  border: 1px solid #e0e4ea;
+  box-shadow: 0 3px 12px #00000008;
+}
 
-      const organismo = document.createElement("p");
-      organismo.textContent =
-        nota.codOrgaDos ||
-        nota.nombreCodOrgaUno ||
-        "Diario Oficial de la Federación";
+.card h3 {
+  color: #102747;
+  margin-bottom: 12px;
+  font-size: 18px;
+}
 
-      const fecha = document.createElement("small");
-      fecha.textContent = `Fecha: ${nota.fecha || nota.fechaConsulta}`;
+.card p {
+  color: #657184;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
 
-      const enlace = document.createElement("a");
-      enlace.href =
-        `https://www.dof.gob.mx/nota_detalle.php?codigo=${encodeURIComponent(nota.codNota)}`;
-      enlace.target = "_blank";
-      enlace.rel = "noopener noreferrer";
-      enlace.textContent = "Consultar publicación oficial";
+.card small {
+  display: block;
+  color: #8b929e;
+  margin-bottom: 12px;
+}
 
-      tarjeta.append(titulo, organismo, fecha, enlace);
-      fragmento.appendChild(tarjeta);
-    });
+.card a {
+  color: #174d83;
+  font-weight: bold;
+  font-size: 14px;
+  text-decoration: none;
+}
 
-    resultados.appendChild(fragmento);
+.card a:hover {
+  text-decoration: underline;
+}
 
-    if (errores > 0) {
-      estado.textContent +=
-        ` Algunas fechas no pudieron consultarse (${errores}).`;
-    }
+.notice {
+  margin-top: 25px;
+  padding: 15px;
+  background: #fff8e7;
+  border-left: 4px solid #c5a45b;
+  color: #665326;
+  font-size: 13px;
+  line-height: 1.5;
+}
 
-  } catch (error) {
-    estado.textContent =
-      "No se pudo completar la consulta del DOF.";
+footer {
+  margin-top: 50px;
+  background: #102747;
+  color: white;
+  padding: 28px 7%;
+  text-align: center;
+  font-size: 13px;
+}
 
-    console.error("Error DOF:", error);
+@media(max-width:600px) {
+  .hero h1 {
+    font-size: 25px;
+  }
+
+  nav {
+    gap: 15px;
   }
 }
+</style>
+</head>
 
-document.addEventListener("DOMContentLoaded", consultarDOF);
+<body>
+
+<header>
+  <div class="logo">LEGISLATIVO <span>MX</span></div>
+  <p>INFORMACIÓN LEGISLATIVA NACIONAL</p>
+</header>
+
+<nav>
+  <a href="#">Inicio</a>
+  <a href="#novedades">Novedades</a>
+  <a href="#materias">Materias jurídicas</a>
+  <a href="#fuentes">Fuentes oficiales</a>
+</nav>
+
+<section class="hero">
+  <h1>Las leyes cambian.<br>Tú debes estar informado.</h1>
+  <p>
+    Consulta novedades legislativas, reformas y publicaciones
+    oficiales de México desde una sola plataforma.
+  </p>
+</section>
+
+<main id="novedades">
+
+  <h2 class="section-title">Monitor legislativo</h2>
+
+  <div class="tools">
+    <input
+      type="text"
+      id="search"
+      placeholder="Buscar leyes, reformas o temas..."
+    >
+
+    <select id="category">
+      <option value="todos">Todas las materias</option>
+      <option value="Penal">Derecho penal</option>
+      <option value="Laboral">Derecho laboral</option>
+      <option value="Fiscal">Derecho fiscal</option>
+      <option value="Familiar">Derecho familiar</option>
+      <option value="Constitucional">Constitucional</option>
+    </select>
+  </div>
+
+  <div id="dof-status">
+    Preparando consulta del Diario Oficial de la Federación...
+  </div>
+
+  <div id="dof-results" class="news"></div>
+
+  <div class="notice">
+    LEGISLATIVO MX consulta publicaciones del Diario Oficial
+    de la Federación. La clasificación jurídica y el monitoreo
+    automático de nuevas reformas se encuentran en desarrollo.
+  </div>
+
+  <section id="materias" style="margin-top:35px">
+    <h2 class="section-title">Materias jurídicas</h2>
+    <p>
+      Penal · Laboral · Familiar · Fiscal · Constitucional ·
+      Administrativo · Civil · Mercantil
+    </p>
+  </section>
+
+  <section id="fuentes" style="margin-top:30px">
+    <h2 class="section-title">Fuentes oficiales</h2>
+    <p>
+      <a href="https://www.dof.gob.mx/" target="_blank"
+      rel="noopener noreferrer">
+        Diario Oficial de la Federación
+      </a>
+    </p>
+  </section>
+
+</main>
+
+<footer>
+  LEGISLATIVO MX © 2026
+  <p>Información legislativa de México</p>
+</footer>
+
+<script>
+const search = document.getElementById("search");
+const category = document.getElementById("category");
+
+function filterNews() {
+  const term = search.value.toLowerCase().trim();
+  const selected = category.value;
+
+  const cards = document.querySelectorAll("#dof-results .card");
+
+  cards.forEach(card => {
+    const text = card.innerText.toLowerCase();
+
+    const matchesText = text.includes(term);
+
+    // La clasificación por materia se incorporará después.
+    const matchesCategory = selected === "todos";
+
+    card.style.display =
+      matchesText && matchesCategory ? "block" : "none";
+  });
+}
+
+search.addEventListener("input", filterNews);
+category.addEventListener("change", filterNews);
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js")
+      .then(() => console.log("LEGISLATIVO MX está listo"))
+      .catch(error => console.error("Error:", error));
+  });
+}
+</script>
+
+<script src="./dof.js"></script>
+
+</body>
+</html>
