@@ -232,7 +232,14 @@ async function consultarDetalle(codNota) {
 function crearTarjeta(nota, materias, contenidoDisponible) {
   const tarjeta = document.createElement("article");
   tarjeta.className = "card";
+tarjeta.dataset.materias = materias.join("|");
 
+tarjeta.dataset.clasificacion =
+  materias.length > 0
+    ? "clasificadas"
+    : contenidoDisponible
+      ? "otras"
+      : "pendientes";
   const titulo = document.createElement("h3");
   titulo.textContent = nota.titulo;
 
