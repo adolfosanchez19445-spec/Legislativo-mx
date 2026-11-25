@@ -444,7 +444,34 @@ if ("serviceWorker" in navigator) {
 }
 </script>
 
+<div id="juria-diagnostico" style="
+  background: #eef4fb;
+  border: 1px solid #b8cce3;
+  border-radius: 10px;
+  padding: 15px;
+  margin: 15px 0;
+  color: #102747;
+">
+  Comprobando JURIA...
+</div>
+
 <script src="./catalogo-juridico.js"></script>
+
+<script>
+(function() {
+  const panel = document.getElementById("juria-diagnostico");
+
+  if (window.CATALOGO_JURIDICO) {
+    panel.textContent =
+      "JURIA está conectada correctamente. " +
+      CATALOGO_JURIDICO.materias.length +
+      " materias jurídicas disponibles.";
+  } else {
+    panel.textContent =
+      "Error: no se pudo cargar el catálogo jurídico.";
+  }
+})();
+</script>
   <script>
   document.addEventListener("DOMContentLoaded", function() {
     console.log("JURIA está funcionando");
