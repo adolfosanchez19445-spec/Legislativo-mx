@@ -6,6 +6,7 @@
 <title>LEGISLATIVO MX</title>
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#102747">
+
 <style>
 * {
   box-sizing: border-box;
@@ -106,6 +107,13 @@ input {
   min-width: 220px;
 }
 
+#dof-status {
+  grid-column: 1 / -1;
+  padding: 15px;
+  color: #102747;
+  line-height: 1.5;
+}
+
 .news {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -118,17 +126,6 @@ input {
   border-radius: 10px;
   border: 1px solid #e0e4ea;
   box-shadow: 0 3px 12px #00000008;
-}
-
-.tag {
-  display: inline-block;
-  background: #e9edf4;
-  color: #102747;
-  padding: 6px 10px;
-  border-radius: 5px;
-  font-size: 11px;
-  font-weight: bold;
-  margin-bottom: 14px;
 }
 
 .card h3 {
@@ -145,7 +142,20 @@ input {
 }
 
 .card small {
+  display: block;
   color: #8b929e;
+  margin-bottom: 12px;
+}
+
+.card a {
+  color: #174d83;
+  font-weight: bold;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.card a:hover {
+  text-decoration: underline;
 }
 
 .notice {
@@ -168,8 +178,13 @@ footer {
 }
 
 @media(max-width:600px) {
-  .hero h1 { font-size: 25px; }
-  nav { gap: 15px; }
+  .hero h1 {
+    font-size: 25px;
+  }
+
+  nav {
+    gap: 15px;
+  }
 }
 </style>
 </head>
@@ -217,30 +232,31 @@ footer {
     </select>
   </div>
 
-  <div class="news" id="news">
-    <div id="dof-status">
-  Consultando publicaciones del Diario Oficial de la Federación...
-</div>
-
-<div id="dof-results" class="news"></div>
+  <div id="dof-status">
+    Preparando consulta del Diario Oficial de la Federación...
   </div>
 
+  <div id="dof-results" class="news"></div>
+
   <div class="notice">
-    Aviso: esta primera versión es un prototipo.
-    Todavía no está conectada al Diario Oficial de la Federación
-    ni contiene un monitoreo automático de reformas.
+    LEGISLATIVO MX consulta publicaciones del Diario Oficial
+    de la Federación. La clasificación jurídica y el monitoreo
+    automático de nuevas reformas se encuentran en desarrollo.
   </div>
 
   <section id="materias" style="margin-top:35px">
     <h2 class="section-title">Materias jurídicas</h2>
-    <p>Penal · Laboral · Familiar · Fiscal · Constitucional ·
-    Administrativo · Civil · Mercantil</p>
+    <p>
+      Penal · Laboral · Familiar · Fiscal · Constitucional ·
+      Administrativo · Civil · Mercantil
+    </p>
   </section>
 
   <section id="fuentes" style="margin-top:30px">
     <h2 class="section-title">Fuentes oficiales</h2>
     <p>
-      <a href="https://www.dof.gob.mx/" target="_blank">
+      <a href="https://www.dof.gob.mx/" target="_blank"
+      rel="noopener noreferrer">
         Diario Oficial de la Federación
       </a>
     </p>
@@ -256,16 +272,20 @@ footer {
 <script>
 const search = document.getElementById("search");
 const category = document.getElementById("category");
-const cards = document.querySelectorAll(".card");
 
 function filterNews() {
-  const term = search.value.toLowerCase();
+  const term = search.value.toLowerCase().trim();
   const selected = category.value;
 
+  const cards = document.querySelectorAll("#dof-results .card");
+
   cards.forEach(card => {
-    const matchesText = card.innerText.toLowerCase().includes(term);
-    const matchesCategory =
-      selected === "todos" || card.dataset.category === selected;
+    const text = card.innerText.toLowerCase();
+
+    const matchesText = text.includes(term);
+
+    // La clasificación por materia se incorporará después.
+    const matchesCategory = selected === "todos";
 
     card.style.display =
       matchesText && matchesCategory ? "block" : "none";
@@ -275,6 +295,7 @@ function filterNews() {
 search.addEventListener("input", filterNews);
 category.addEventListener("change", filterNews);
 </script>
+
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
@@ -284,6 +305,8 @@ if ("serviceWorker" in navigator) {
   });
 }
 </script>
-  <script src="./dof.js"></script>
+
+<script src="./dof.js"></script>
+
 </body>
 </html>
