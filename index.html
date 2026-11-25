@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LEGISLATIVO MX</title>
+
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#102747">
 
@@ -108,8 +109,7 @@ input {
 }
 
 #dof-status {
-  grid-column: 1 / -1;
-  padding: 15px;
+  padding: 15px 0;
   color: #102747;
   line-height: 1.5;
 }
@@ -228,12 +228,15 @@ footer {
       <option value="Laboral">Derecho laboral</option>
       <option value="Fiscal">Derecho fiscal</option>
       <option value="Familiar">Derecho familiar</option>
-      <option value="Constitucional">Constitucional</option>
+      <option value="Constitucional">Derecho constitucional</option>
+      <option value="Administrativo">Derecho administrativo</option>
+      <option value="Civil">Derecho civil</option>
+      <option value="Mercantil">Derecho mercantil</option>
     </select>
   </div>
 
   <div id="dof-status">
-    Preparando consulta del Diario Oficial de la Federación...
+    Preparando consulta de los últimos 7 días...
   </div>
 
   <div id="dof-results" class="news"></div>
@@ -255,8 +258,9 @@ footer {
   <section id="fuentes" style="margin-top:30px">
     <h2 class="section-title">Fuentes oficiales</h2>
     <p>
-      <a href="https://www.dof.gob.mx/" target="_blank"
-      rel="noopener noreferrer">
+      <a href="https://www.dof.gob.mx/"
+         target="_blank"
+         rel="noopener noreferrer">
         Diario Oficial de la Federación
       </a>
     </p>
@@ -284,7 +288,7 @@ function filterNews() {
 
     const matchesText = text.includes(term);
 
-    // La clasificación por materia se incorporará después.
+    // La clasificación jurídica se incorporará posteriormente.
     const matchesCategory = selected === "todos";
 
     card.style.display =
@@ -299,14 +303,14 @@ category.addEventListener("change", filterNews);
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js")
+    navigator.serviceWorker.register("./sw.js?v=2")
       .then(() => console.log("LEGISLATIVO MX está listo"))
       .catch(error => console.error("Error:", error));
   });
 }
 </script>
 
-<script src="./dof.js"></script>
+<script src="./dof.js?v=7"></script>
 
 </body>
 </html>
