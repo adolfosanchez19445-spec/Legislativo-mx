@@ -21,160 +21,142 @@ function normalizarTexto(texto) {
   return String(texto || "")
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, " ")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
 
-// Palabras y expresiones para identificar materias jurídicas.
 const CLASIFICACION = {
   Penal: [
-    "codigo penal",
-    "derecho penal",
-    "materia penal",
-    "delito",
-    "delitos",
-    "feminicidio",
-    "homicidio",
-    "robo",
-    "fraude",
-    "extorsion",
-    "delincuencia organizada",
-    "proceso penal",
-    "justicia penal",
-    "ministerio publico",
+    "codigo penal", "derecho penal", "materia penal",
+    "delito", "delitos", "feminicidio", "homicidio",
+    "robo", "fraude", "extorsion",
+    "delincuencia organizada", "proceso penal",
+    "justicia penal", "ministerio publico",
     "carpeta de investigacion"
   ],
 
   Laboral: [
-    "derecho laboral",
-    "materia laboral",
-    "ley federal del trabajo",
-    "relaciones laborales",
-    "relacion de trabajo",
-    "trabajadores",
-    "trabajador",
-    "sindicato",
-    "contrato colectivo",
-    "salario minimo",
-    "prestaciones laborales",
-    "jornada laboral",
-    "riesgos de trabajo",
-    "seguridad social",
+    "derecho laboral", "materia laboral",
+    "ley federal del trabajo", "relaciones laborales",
+    "relacion de trabajo", "trabajadores", "trabajador",
+    "sindicato", "contrato colectivo", "salario minimo",
+    "prestaciones laborales", "jornada laboral",
+    "riesgos de trabajo", "seguridad social",
     "reparto de utilidades"
   ],
 
   Fiscal: [
-    "derecho fiscal",
-    "materia fiscal",
+    "derecho fiscal", "materia fiscal",
     "codigo fiscal de la federacion",
     "ley del impuesto sobre la renta",
     "impuesto sobre la renta",
     "impuesto al valor agregado",
-    "contribuciones",
-    "obligaciones fiscales",
-    "creditos fiscales",
-    "autoridad fiscal",
+    "contribuciones", "obligaciones fiscales",
+    "creditos fiscales", "autoridad fiscal",
     "servicio de administracion tributaria",
-    "recaudacion",
-    "declaracion fiscal"
+    "recaudacion", "declaracion fiscal"
   ],
 
   Familiar: [
-    "derecho familiar",
-    "materia familiar",
-    "codigo familiar",
-    "derecho de familia",
-    "pension alimenticia",
-    "alimentos",
-    "divorcio",
-    "matrimonio",
-    "adopcion",
-    "filiacion",
-    "patria potestad",
-    "guarda y custodia",
-    "violencia familiar",
-    "tutela"
+    "derecho familiar", "materia familiar",
+    "codigo familiar", "derecho de familia",
+    "pension alimenticia", "alimentos", "divorcio",
+    "matrimonio", "adopcion", "filiacion",
+    "patria potestad", "guarda y custodia",
+    "violencia familiar", "tutela"
   ],
 
   Constitucional: [
-    "derecho constitucional",
-    "materia constitucional",
-    "constitucion politica",
-    "reforma constitucional",
-    "articulo constitucional",
-    "derechos humanos",
+    "derecho constitucional", "materia constitucional",
+    "constitucion politica", "reforma constitucional",
+    "articulo constitucional", "derechos humanos",
     "garantias constitucionales",
     "controversia constitucional",
     "accion de inconstitucionalidad",
-    "poder legislativo",
-    "poder ejecutivo",
+    "poder legislativo", "poder ejecutivo",
     "poder judicial"
   ],
 
   Administrativo: [
-    "derecho administrativo",
-    "materia administrativa",
-    "procedimiento administrativo",
-    "acto administrativo",
+    "derecho administrativo", "materia administrativa",
+    "procedimiento administrativo", "acto administrativo",
     "responsabilidad administrativa",
-    "servidores publicos",
-    "administracion publica",
-    "contratacion publica",
-    "licitacion publica",
-    "concesiones",
-    "sanciones administrativas",
+    "servidores publicos", "administracion publica",
+    "contratacion publica", "licitacion publica",
+    "concesiones", "sanciones administrativas",
     "organos administrativos"
   ],
 
   Civil: [
-    "derecho civil",
-    "materia civil",
-    "codigo civil",
-    "responsabilidad civil",
-    "contrato civil",
-    "arrendamiento",
-    "sucesion testamentaria",
-    "sucesion intestamentaria",
-    "bienes inmuebles",
-    "derechos reales",
-    "obligaciones civiles",
+    "derecho civil", "materia civil", "codigo civil",
+    "responsabilidad civil", "contrato civil",
+    "arrendamiento", "sucesion testamentaria",
+    "sucesion intestamentaria", "bienes inmuebles",
+    "derechos reales", "obligaciones civiles",
     "patrimonio civil"
   ],
 
   Mercantil: [
-    "derecho mercantil",
-    "materia mercantil",
-    "codigo de comercio",
-    "concurso mercantil",
-    "sociedad anonima",
-    "sociedades mercantiles",
-    "titulos de credito",
-    "operaciones mercantiles",
-    "comercio exterior",
-    "contratos mercantiles",
-    "instituciones de credito",
-    "actividad empresarial"
+    "derecho mercantil", "materia mercantil",
+    "codigo de comercio", "concurso mercantil",
+    "sociedad anonima", "sociedades mercantiles",
+    "titulos de credito", "operaciones mercantiles",
+    "comercio exterior", "contratos mercantiles",
+    "instituciones de credito", "actividad empresarial"
   ]
 };
 
+// Clasificación con puntuación y motivos.
 function clasificarPublicacion(texto) {
   const contenido = normalizarTexto(texto);
 
-  const materias = [];
+  const detalles = [];
 
   for (const [materia, palabras] of Object.entries(CLASIFICACION)) {
     const coincidencias = palabras.filter(palabra =>
       contenido.includes(normalizarTexto(palabra))
     );
 
-    if (coincidencias.length > 0) {
-      materias.push(materia);
+    if (coincidencias.length === 0) continue;
+
+    // Las expresiones de varias palabras tienen mayor peso.
+    const puntuacion = coincidencias.reduce((total, palabra) => {
+      const peso = palabra.trim().split(/\s+/).length >= 2 ? 3 : 1;
+      return total + peso;
+    }, 0);
+
+    let confianza = "baja";
+
+    if (puntuacion >= 6) {
+      confianza = "alta";
+    } else if (puntuacion >= 3) {
+      confianza = "media";
     }
+
+    detalles.push({
+      materia,
+      puntuacion,
+      confianza,
+      motivos: coincidencias
+    });
   }
 
-  return materias;
+  // Solo se asignan como materias identificadas
+  // las que alcanzan una puntuación mínima de 3.
+  const materias = detalles
+    .filter(detalle => detalle.puntuacion >= 3)
+    .map(detalle => detalle.materia);
+
+  const candidatas = detalles
+    .filter(detalle => detalle.puntuacion < 3);
+
+  return {
+    materias,
+    candidatas,
+    detalles
+  };
 }
 
 function extraerTextoHTML(html) {
@@ -198,17 +180,12 @@ async function consultarDetalle(codNota) {
       `${DOF_API}/notas/nota/${encodeURIComponent(codNota)}`
     );
 
-    if (!respuesta.ok) {
-      return "";
-    }
+    if (!respuesta.ok) return "";
 
     const datos = await respuesta.json();
-
     const nota = datos.Nota || datos.nota || {};
 
-    if (Array.isArray(nota)) {
-      return "";
-    }
+    if (Array.isArray(nota)) return "";
 
     const contenido =
       nota.cadenaContenido ||
@@ -219,27 +196,24 @@ async function consultarDetalle(codNota) {
     return extraerTextoHTML(contenido);
 
   } catch (error) {
-    console.error(
-      "No se pudo consultar el detalle:",
-      codNota,
-      error
-    );
-
+    console.error("Error al consultar detalle:", codNota, error);
     return "";
   }
 }
 
-function crearTarjeta(nota, materias, contenidoDisponible) {
+function crearTarjeta(nota, resultado, contenidoDisponible) {
   const tarjeta = document.createElement("article");
   tarjeta.className = "card";
-tarjeta.dataset.materias = materias.join("|");
 
-tarjeta.dataset.clasificacion =
-  materias.length > 0
-    ? "clasificadas"
-    : contenidoDisponible
-      ? "otras"
-      : "pendientes";
+  tarjeta.dataset.materias = resultado.materias.join("|");
+
+  tarjeta.dataset.clasificacion =
+    resultado.materias.length > 0
+      ? "clasificadas"
+      : contenidoDisponible && resultado.candidatas.length === 0
+        ? "otras"
+        : "pendientes";
+
   const titulo = document.createElement("h3");
   titulo.textContent = nota.titulo;
 
@@ -251,16 +225,45 @@ tarjeta.dataset.clasificacion =
 
   const clasificacion = document.createElement("p");
 
-  if (materias.length > 0) {
+  if (resultado.materias.length > 0) {
     clasificacion.textContent =
-      "Materias detectadas: " +
-      materias.map(materia => "Derecho " + materia.toLowerCase()).join(", ");
+      "Materias identificadas: " +
+      resultado.materias.join(", ");
+
+    clasificacion.style.fontWeight = "bold";
+
+    resultado.detalles
+      .filter(detalle => resultado.materias.includes(detalle.materia))
+      .forEach(detalle => {
+        const informacion = document.createElement("p");
+
+        informacion.textContent =
+          `Derecho ${detalle.materia}: confianza ${detalle.confianza}. ` +
+          `Motivos: ${detalle.motivos.join(", ")}.`;
+
+        tarjeta.appendChild(informacion);
+      });
+
+  } else if (resultado.candidatas.length > 0) {
+    clasificacion.textContent =
+      "Clasificación pendiente: se encontraron indicios débiles.";
+
+    resultado.candidatas.forEach(detalle => {
+      const informacion = document.createElement("p");
+
+      informacion.textContent =
+        `Posible materia: ${detalle.materia}. ` +
+        `Motivos: ${detalle.motivos.join(", ")}. Requiere revisión.`;
+
+      tarjeta.appendChild(informacion);
+    });
+
   } else if (contenidoDisponible) {
     clasificacion.textContent =
-      "Clasificación: Otras publicaciones";
+      "Otras publicaciones: sin materia identificada.";
   } else {
     clasificacion.textContent =
-      "Clasificación pendiente: contenido no disponible";
+      "Pendiente: no se pudo recuperar el contenido.";
   }
 
   const fecha = document.createElement("small");
@@ -268,7 +271,6 @@ tarjeta.dataset.clasificacion =
     `Fecha: ${nota.fecha || nota.fechaConsulta}`;
 
   const enlace = document.createElement("a");
-
   enlace.href =
     `https://www.dof.gob.mx/nota_detalle.php?codigo=${encodeURIComponent(nota.codNota)}`;
 
@@ -301,7 +303,7 @@ async function consultarDOF() {
   let publicaciones = [];
   let errores = 0;
 
-  // Primera etapa: consultar las publicaciones de cada fecha.
+  // Consultar las publicaciones de los últimos siete días.
   for (let i = 0; i < DIAS_CONSULTA; i++) {
     const fecha = obtenerFecha(i);
 
@@ -334,19 +336,14 @@ async function consultarDOF() {
 
     } catch (error) {
       errores++;
-
-      console.error(
-        "Error consultando fecha:",
-        fecha,
-        error
-      );
+      console.error("Error consultando fecha:", fecha, error);
     }
 
     estado.textContent =
       `Consultando DOF: ${i + 1} de ${DIAS_CONSULTA} días...`;
   }
 
-  // Evitar publicaciones duplicadas.
+  // Eliminar duplicados.
   const unicas = new Map();
 
   publicaciones.forEach(nota => {
@@ -358,13 +355,13 @@ async function consultarDOF() {
   if (publicaciones.length === 0) {
     estado.textContent =
       errores === DIAS_CONSULTA
-        ? "No fue posible conectar con el Diario Oficial de la Federación. Intenta nuevamente."
+        ? "No fue posible conectar con el DOF. Intenta nuevamente."
         : "No se encontraron publicaciones en los últimos 7 días.";
 
     return;
   }
 
-  // Ordenar publicaciones por fecha.
+  // Ordenar por fecha.
   publicaciones.sort((a, b) => {
     const fechaA = a.fechaConsulta.split("-").reverse().join("");
     const fechaB = b.fechaConsulta.split("-").reverse().join("");
@@ -378,7 +375,7 @@ async function consultarDOF() {
   let otras = 0;
   let pendientes = 0;
 
-  // Segunda etapa: consultar el contenido y clasificar.
+  // Recuperar contenido y clasificar.
   for (let i = 0; i < publicaciones.length; i++) {
     const nota = publicaciones[i];
 
@@ -394,25 +391,20 @@ async function consultarDOF() {
       contenido
     ].join(" ");
 
-    const materias = clasificarPublicacion(textoAnalizar);
+    const resultado = clasificarPublicacion(textoAnalizar);
 
-    if (materias.length > 0) {
+    if (resultado.materias.length > 0) {
       clasificadas++;
-    } else if (contenido) {
+    } else if (contenido && resultado.candidatas.length === 0) {
       otras++;
     } else {
       pendientes++;
     }
 
-    const tarjeta = crearTarjeta(
-      nota,
-      materias,
-      Boolean(contenido)
+    fragmento.appendChild(
+      crearTarjeta(nota, resultado, Boolean(contenido))
     );
 
-    fragmento.appendChild(tarjeta);
-
-    // Respetar una pausa entre consultas al servicio.
     if (i < publicaciones.length - 1) {
       await esperar(ESPERA_ENTRE_NOTAS);
     }
@@ -428,10 +420,9 @@ async function consultarDOF() {
 
   if (errores > 0) {
     estado.textContent +=
-      ` No se pudieron consultar ${errores} fechas.`;
+      ` Algunas fechas no pudieron consultarse (${errores}).`;
   }
 
-  // Aplicar los filtros actuales después de cargar los resultados.
   if (typeof filterNews === "function") {
     filterNews();
   }
