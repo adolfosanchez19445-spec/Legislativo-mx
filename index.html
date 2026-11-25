@@ -445,6 +445,13 @@ if ("serviceWorker" in navigator) {
 </script>
 
 <script src="./catalogo-juridico.js"></script>
+  <script>
+  document.addEventListener("DOMContentLoaded", function() {
+    console.log("JURIA está funcionando");
+    console.log("Materias:", CATALOGO_JURIDICO.materias.length);
+    console.log("Tipos documentales:", CATALOGO_JURIDICO.tiposDocumentales);
+  });
+</script>
 <script src="./dof.js?v=9"></script>
 
 <script>
