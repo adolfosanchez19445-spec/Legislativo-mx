@@ -1,20 +1,16 @@
 const DOF_API = "https://sidof.segob.gob.mx/dof/sidof";
-
 const DIAS_CONSULTA = 7;
 const ESPERA_ENTRE_NOTAS = 250;
 
-// --------------------------------------------------
-// FECHAS Y UTILIDADES
-// --------------------------------------------------
+// ==================================================
+// UTILIDADES
+// ==================================================
 
 function obtenerFecha(diasAtras = 0) {
   const fecha = new Date();
   fecha.setDate(fecha.getDate() - diasAtras);
 
-  const dia = String(fecha.getDate()).padStart(2, "0");
-  const mes = String(fecha.getMonth() + 1).padStart(2, "0");
-
-  return `${dia}-${mes}-${fecha.getFullYear()}`;
+  return `${String(fecha.getDate()).padStart(2, "0")}-${String(fecha.getMonth() + 1).padStart(2, "0")}-${fecha.getFullYear()}`;
 }
 
 function esperar(ms) {
@@ -31,13 +27,23 @@ function normalizarTexto(texto) {
     .trim();
 }
 
-function contieneFrase(texto, frase) {
+function coincide(texto, frase) {
   return texto.includes(normalizarTexto(frase));
 }
 
-// --------------------------------------------------
-// CATÁLOGO DE REGLAS PARA LAS 39 MATERIAS
-// --------------------------------------------------
+function extraerTextoHTML(html) {
+  const contenedor = document.createElement("div");
+  contenedor.innerHTML = String(html || "");
+
+  contenedor.querySelectorAll("script, style, noscript").forEach(e => e.remove());
+
+  return contenedor.textContent || contenedor.innerText || "";
+}
+
+// ==================================================
+// REGLAS JURÍDICAS
+// 39 MATERIAS
+// ==================================================
 
 const REGLAS_JURIDICAS = {
 
@@ -49,60 +55,43 @@ const REGLAS_JURIDICAS = {
       "accion de inconstitucionalidad",
       "derecho constitucional",
       "materia constitucional",
-      "poder legislativo federal",
-      "organos constitucionales autonomos"
+      "control constitucional",
+      "supremacia constitucional"
     ],
     debiles: [
-      "derechos fundamentales",
       "division de poderes",
-      "supremacia constitucional",
-      "control constitucional",
-      "constitucion politica"
+      "derechos fundamentales",
+      "organos constitucionales autonomos"
     ]
   },
 
   "Penal": {
     fuertes: [
       "codigo penal federal",
-      "codigo nacional de procedimientos penales",
       "ley nacional de ejecucion penal",
       "derecho penal",
       "materia penal",
-      "proceso penal",
-      "carpeta de investigacion",
       "delincuencia organizada",
       "justicia penal"
     ],
     debiles: [
-      "feminicidio",
-      "homicidio",
-      "robo",
-      "fraude",
-      "extorsion",
-      "delito",
-      "delitos",
-      "ministerio publico"
+      "feminicidio", "homicidio", "robo", "fraude",
+      "extorsion", "delitos", "ministerio publico"
     ]
   },
 
   "Procesal Penal": {
     fuertes: [
       "codigo nacional de procedimientos penales",
-      "procedimiento penal",
       "proceso penal acusatorio",
       "sistema penal acusatorio",
       "audiencia inicial",
-      "etapa de investigacion",
-      "etapa intermedia",
       "juicio oral penal",
       "medidas cautelares penales"
     ],
     debiles: [
-      "imputado",
-      "vinculacion a proceso",
-      "prueba pericial",
-      "juez de control",
-      "carpeta de investigacion"
+      "imputado", "vinculacion a proceso",
+      "juez de control", "carpeta de investigacion"
     ]
   },
 
@@ -113,17 +102,12 @@ const REGLAS_JURIDICAS = {
       "materia civil",
       "responsabilidad civil",
       "obligaciones civiles",
-      "derechos reales",
       "contrato civil",
-      "sucesion testamentaria",
-      "sucesion intestamentaria"
+      "sucesion testamentaria"
     ],
     debiles: [
-      "arrendamiento",
-      "bienes inmuebles",
-      "propiedad privada",
-      "daño moral",
-      "patrimonio",
+      "arrendamiento", "bienes inmuebles",
+      "propiedad privada", "daño moral",
       "contratos civiles"
     ]
   },
@@ -133,21 +117,14 @@ const REGLAS_JURIDICAS = {
       "derecho familiar",
       "materia familiar",
       "codigo familiar",
-      "derecho de familia",
       "pension alimenticia",
       "guarda y custodia",
       "patria potestad",
-      "violencia familiar",
-      "interes superior de la niñez"
+      "violencia familiar"
     ],
     debiles: [
-      "divorcio",
-      "matrimonio",
-      "adopcion",
-      "filiacion",
-      "tutela",
-      "alimentos",
-      "convivencia familiar"
+      "divorcio", "matrimonio", "adopcion",
+      "filiacion", "tutela", "alimentos"
     ]
   },
 
@@ -159,17 +136,11 @@ const REGLAS_JURIDICAS = {
       "concurso mercantil",
       "sociedades mercantiles",
       "titulos de credito",
-      "contratos mercantiles",
-      "operaciones mercantiles",
-      "juicio ejecutivo mercantil"
+      "contratos mercantiles"
     ],
     debiles: [
-      "sociedad anonima",
-      "actividad empresarial",
-      "comerciante",
-      "comercio",
-      "pagares",
-      "letras de cambio"
+      "sociedad anonima", "comerciante",
+      "operaciones mercantiles", "pagares"
     ]
   },
 
@@ -181,18 +152,11 @@ const REGLAS_JURIDICAS = {
       "contrato colectivo de trabajo",
       "relaciones laborales",
       "justicia laboral",
-      "tribunal laboral",
-      "riesgos de trabajo",
-      "reparto de utilidades"
+      "tribunal laboral"
     ],
     debiles: [
-      "trabajador",
-      "trabajadores",
-      "sindicato",
-      "salario",
-      "jornada laboral",
-      "prestaciones laborales",
-      "huelga"
+      "trabajadores", "sindicato", "salario",
+      "jornada laboral", "huelga"
     ]
   },
 
@@ -206,15 +170,18 @@ const REGLAS_JURIDICAS = {
       "administracion publica",
       "contratacion publica",
       "licitacion publica",
-      "justicia administrativa"
+      "concesion administrativa",
+      "revocacion de autorizacion",
+      "revocacion de concesion"
     ],
     debiles: [
       "servidores publicos",
       "dependencia gubernamental",
       "concesiones",
       "sanciones administrativas",
-      "organos administrativos",
-      "secretaria de estado"
+      "secretaria de estado",
+      "oficio mediante el cual",
+      "autorizacion administrativa"
     ]
   },
 
@@ -227,18 +194,11 @@ const REGLAS_JURIDICAS = {
       "materia fiscal",
       "creditos fiscales",
       "obligaciones fiscales",
-      "administracion tributaria",
       "resolucion miscelanea fiscal"
     ],
     debiles: [
-      "impuestos",
-      "contribuciones",
-      "recaudacion",
-      "declaracion fiscal",
-      "autoridad fiscal",
-      "servicio de administracion tributaria",
-      "isr",
-      "iva"
+      "impuestos", "contribuciones", "recaudacion",
+      "declaracion fiscal", "autoridad fiscal", "isr", "iva"
     ]
   },
 
@@ -247,16 +207,20 @@ const REGLAS_JURIDICAS = {
       "derecho financiero",
       "sistema financiero mexicano",
       "ley de instituciones de credito",
+      "ley de uniones de credito",
       "instituciones financieras",
       "operaciones financieras",
       "regulacion financiera",
-      "servicios financieros"
+      "servicios financieros",
+      "entidades financieras",
+      "comision nacional bancaria y de valores",
+      "autorizacion para operar como entidad financiera",
+      "revocacion de autorizacion financiera"
     ],
     debiles: [
-      "financiamiento",
-      "entidades financieras",
-      "capital financiero",
-      "mercados financieros"
+      "financiamiento", "capital financiero",
+      "mercados financieros", "union de credito",
+      "entidad financiera"
     ]
   },
 
@@ -267,17 +231,12 @@ const REGLAS_JURIDICAS = {
       "materia agraria",
       "tribunales agrarios",
       "registro agrario nacional",
-      "nucleo agrario",
       "propiedad ejidal",
       "propiedad comunal"
     ],
     debiles: [
-      "ejido",
-      "ejidatarios",
-      "comuneros",
-      "tierras ejidales",
-      "asamblea ejidal",
-      "procuraduria agraria"
+      "ejido", "ejidatarios", "comuneros",
+      "tierras ejidales", "asamblea ejidal"
     ]
   },
 
@@ -293,12 +252,9 @@ const REGLAS_JURIDICAS = {
       "areas naturales protegidas"
     ],
     debiles: [
-      "contaminacion",
-      "biodiversidad",
-      "ecosistemas",
-      "residuos peligrosos",
-      "recursos naturales",
-      "cambio climatico"
+      "contaminacion", "biodiversidad",
+      "ecosistemas", "residuos peligrosos",
+      "recursos naturales", "cambio climatico"
     ]
   },
 
@@ -310,23 +266,17 @@ const REGLAS_JURIDICAS = {
       "tribunal electoral",
       "proceso electoral",
       "justicia electoral",
-      "autoridades electorales",
-      "delitos electorales"
+      "autoridades electorales"
     ],
     debiles: [
-      "elecciones",
-      "voto",
-      "sufragio",
-      "candidaturas",
-      "partidos politicos",
-      "instituto nacional electoral"
+      "elecciones", "voto", "sufragio",
+      "candidaturas", "partidos politicos"
     ]
   },
 
   "Internacional Público": {
     fuertes: [
       "derecho internacional publico",
-      "materia internacional publica",
       "responsabilidad internacional del estado",
       "organizacion de las naciones unidas",
       "relaciones diplomaticas",
@@ -336,7 +286,6 @@ const REGLAS_JURIDICAS = {
     debiles: [
       "relaciones internacionales",
       "cooperacion internacional",
-      "soberania estatal",
       "organismos internacionales"
     ]
   },
@@ -344,18 +293,14 @@ const REGLAS_JURIDICAS = {
   "Internacional Privado": {
     fuertes: [
       "derecho internacional privado",
-      "materia internacional privada",
       "conflicto de leyes",
       "conflicto de jurisdicciones",
       "competencia judicial internacional",
-      "reconocimiento de sentencias extranjeras",
-      "exequatur"
+      "reconocimiento de sentencias extranjeras"
     ],
     debiles: [
-      "ley aplicable",
-      "domicilio internacional",
-      "contratos internacionales",
-      "derecho extranjero"
+      "ley aplicable", "domicilio internacional",
+      "contratos internacionales", "derecho extranjero"
     ]
   },
 
@@ -364,16 +309,12 @@ const REGLAS_JURIDICAS = {
       "comision nacional de los derechos humanos",
       "sistema interamericano de derechos humanos",
       "convencion americana sobre derechos humanos",
-      "derecho internacional de los derechos humanos",
       "proteccion de derechos humanos",
       "violaciones a derechos humanos"
     ],
     debiles: [
-      "derechos humanos",
-      "no discriminacion",
-      "dignidad humana",
-      "igualdad sustantiva",
-      "libertades fundamentales"
+      "derechos humanos", "no discriminacion",
+      "dignidad humana", "igualdad sustantiva"
     ]
   },
 
@@ -384,16 +325,11 @@ const REGLAS_JURIDICAS = {
       "materia migratoria",
       "instituto nacional de migracion",
       "politica migratoria",
-      "situacion migratoria",
       "regularizacion migratoria"
     ],
     debiles: [
-      "migrantes",
-      "personas extranjeras",
-      "refugiados",
-      "asilo",
-      "estancia migratoria",
-      "deportacion"
+      "migrantes", "personas extranjeras",
+      "refugiados", "asilo", "deportacion"
     ]
   },
 
@@ -403,16 +339,12 @@ const REGLAS_JURIDICAS = {
       "gobierno corporativo",
       "responsabilidad corporativa",
       "cumplimiento corporativo",
-      "compliance empresarial",
       "reorganizacion societaria",
       "fusiones y adquisiciones"
     ],
     debiles: [
-      "corporaciones",
-      "consejo de administracion",
-      "accionistas",
-      "estructura empresarial",
-      "control corporativo"
+      "corporaciones", "consejo de administracion",
+      "accionistas", "estructura empresarial"
     ]
   },
 
@@ -421,18 +353,12 @@ const REGLAS_JURIDICAS = {
       "ley del seguro social",
       "ley del instituto de seguridad y servicios sociales",
       "derecho de la seguridad social",
-      "materia de seguridad social",
       "instituto mexicano del seguro social",
-      "instituto de seguridad y servicios sociales",
       "pensiones de seguridad social"
     ],
     debiles: [
-      "seguridad social",
-      "pension",
-      "jubilacion",
-      "afiliacion",
-      "cuotas obrero patronales",
-      "guarderias"
+      "seguridad social", "pension", "jubilacion",
+      "afiliacion", "cuotas obrero patronales"
     ]
   },
 
@@ -441,18 +367,13 @@ const REGLAS_JURIDICAS = {
       "ley de amparo",
       "juicio de amparo",
       "derecho de amparo",
-      "materia de amparo",
       "amparo directo",
       "amparo indirecto",
-      "suspension del acto reclamado",
-      "recurso de revision en amparo"
+      "suspension del acto reclamado"
     ],
     debiles: [
-      "quejoso",
-      "autoridad responsable",
-      "acto reclamado",
-      "sentencia de amparo",
-      "interes juridico"
+      "quejoso", "autoridad responsable",
+      "acto reclamado", "sentencia de amparo"
     ]
   },
 
@@ -460,18 +381,13 @@ const REGLAS_JURIDICAS = {
     fuertes: [
       "codigo nacional de procedimientos civiles y familiares",
       "derecho procesal civil",
-      "materia procesal civil",
       "procedimiento civil",
       "juicio ordinario civil",
-      "juicio ejecutivo civil",
-      "medios de impugnacion civiles"
+      "juicio ejecutivo civil"
     ],
     debiles: [
-      "demanda civil",
-      "emplazamiento",
-      "prueba testimonial",
-      "audiencia civil",
-      "sentencia civil"
+      "demanda civil", "emplazamiento",
+      "audiencia civil", "sentencia civil"
     ]
   },
 
@@ -480,33 +396,26 @@ const REGLAS_JURIDICAS = {
       "juicio contencioso administrativo",
       "procedimiento contencioso administrativo",
       "derecho procesal administrativo",
-      "materia procesal administrativa",
       "tribunal federal de justicia administrativa",
       "recurso administrativo"
     ],
     debiles: [
-      "nulidad administrativa",
-      "demanda administrativa",
-      "impugnacion administrativa",
-      "procedimiento de nulidad"
+      "nulidad administrativa", "demanda administrativa",
+      "impugnacion administrativa"
     ]
   },
 
   "Económico": {
     fuertes: [
       "derecho economico",
-      "materia economica",
       "orden economico",
       "regulacion economica",
       "politica economica",
       "intervencion del estado en la economia"
     ],
     debiles: [
-      "actividad economica",
-      "desarrollo economico",
-      "mercado interno",
-      "planeacion economica",
-      "economia nacional"
+      "actividad economica", "desarrollo economico",
+      "mercado interno", "economia nacional"
     ]
   },
 
@@ -514,20 +423,24 @@ const REGLAS_JURIDICAS = {
     fuertes: [
       "ley de instituciones de credito",
       "ley del mercado de valores",
+      "ley de uniones de credito",
       "derecho bancario",
       "derecho bursatil",
       "materia bancaria",
       "materia bursatil",
       "comision nacional bancaria y de valores",
-      "mercado de valores"
+      "mercado de valores",
+      "union de credito",
+      "uniones de credito",
+      "autorizacion para operar como union de credito",
+      "revocacion de autorizacion de una union de credito"
     ],
     debiles: [
-      "bancos",
       "instituciones de credito",
-      "valores",
+      "operaciones bancarias",
       "bolsa de valores",
       "intermediarios financieros",
-      "operaciones bancarias"
+      "entidad financiera"
     ]
   },
 
@@ -536,18 +449,13 @@ const REGLAS_JURIDICAS = {
       "ley federal de proteccion a la propiedad industrial",
       "ley federal del derecho de autor",
       "derecho de propiedad intelectual",
-      "materia de propiedad intelectual",
       "instituto mexicano de la propiedad industrial",
       "registro de marcas",
       "patentes"
     ],
     debiles: [
-      "derechos de autor",
-      "marcas",
-      "propiedad industrial",
-      "modelos de utilidad",
-      "denominaciones de origen",
-      "secretos industriales"
+      "derechos de autor", "marcas",
+      "propiedad industrial", "modelos de utilidad"
     ]
   },
 
@@ -556,19 +464,15 @@ const REGLAS_JURIDICAS = {
       "delitos informaticos",
       "derecho informatico",
       "derecho digital",
-      "materia informatica",
       "proteccion de datos personales",
       "firma electronica avanzada",
       "comercio electronico",
       "servicios digitales"
     ],
     debiles: [
-      "ciberseguridad",
-      "datos personales",
-      "plataformas digitales",
-      "inteligencia artificial",
-      "sistemas informaticos",
-      "tecnologias de la informacion"
+      "ciberseguridad", "datos personales",
+      "plataformas digitales", "inteligencia artificial",
+      "sistemas informaticos"
     ]
   },
 
@@ -576,20 +480,14 @@ const REGLAS_JURIDICAS = {
     fuertes: [
       "derecho notarial",
       "derecho registral",
-      "materia notarial",
-      "materia registral",
       "ley del notariado",
       "registro publico de la propiedad",
       "registro publico de comercio",
       "funcion notarial"
     ],
     debiles: [
-      "notario publico",
-      "escritura publica",
-      "instrumento notarial",
-      "fe publica",
-      "inscripcion registral",
-      "corredor publico"
+      "notario publico", "escritura publica",
+      "instrumento notarial", "fe publica"
     ]
   },
 
@@ -598,25 +496,19 @@ const REGLAS_JURIDICAS = {
       "ley aduanera",
       "derecho aduanero",
       "materia aduanera",
-      "codigo fiscal aduanero",
       "agencia nacional de aduanas de mexico",
       "despacho aduanero",
       "regimen aduanero"
     ],
     debiles: [
-      "aduana",
-      "importacion",
-      "exportacion",
-      "aranceles",
-      "pedimento",
-      "mercancias"
+      "aduana", "importacion", "exportacion",
+      "aranceles", "pedimento"
     ]
   },
 
   "Municipal": {
     fuertes: [
       "derecho municipal",
-      "materia municipal",
       "gobierno municipal",
       "administracion publica municipal",
       "reglamento municipal",
@@ -624,12 +516,8 @@ const REGLAS_JURIDICAS = {
       "hacienda municipal"
     ],
     debiles: [
-      "municipio",
-      "municipal",
-      "cabildo",
-      "presidencia municipal",
-      "servicios publicos municipales",
-      "regidores"
+      "municipio", "cabildo",
+      "presidencia municipal", "regidores"
     ]
   },
 
@@ -637,18 +525,14 @@ const REGLAS_JURIDICAS = {
     fuertes: [
       "ley federal de competencia economica",
       "derecho de la competencia economica",
-      "materia de competencia economica",
       "practicas monopolicas",
       "concentraciones economicas",
       "comision federal de competencia economica",
       "barreras a la competencia"
     ],
     debiles: [
-      "monopolio",
-      "competencia economica",
-      "mercado relevante",
-      "poder sustancial de mercado",
-      "libre concurrencia"
+      "monopolio", "mercado relevante",
+      "poder sustancial de mercado", "libre concurrencia"
     ]
   },
 
@@ -657,14 +541,11 @@ const REGLAS_JURIDICAS = {
       "derecho comparado",
       "estudio comparado de legislaciones",
       "comparacion de sistemas juridicos",
-      "sistemas juridicos comparados",
       "legislacion comparada"
     ],
     debiles: [
-      "common law",
-      "civil law",
-      "sistema juridico extranjero",
-      "derecho extranjero"
+      "common law", "civil law",
+      "sistema juridico extranjero", "derecho extranjero"
     ]
   },
 
@@ -679,12 +560,8 @@ const REGLAS_JURIDICAS = {
       "comision federal para la proteccion contra riesgos sanitarios"
     ],
     debiles: [
-      "servicios de salud",
-      "expediente clinico",
-      "consentimiento informado",
-      "personal medico",
-      "establecimientos de salud",
-      "insumos para la salud"
+      "servicios de salud", "expediente clinico",
+      "consentimiento informado", "personal medico"
     ]
   },
 
@@ -695,16 +572,11 @@ const REGLAS_JURIDICAS = {
       "materia educativa",
       "sistema educativo nacional",
       "legislacion educativa",
-      "autoridad educativa",
-      "educacion superior"
+      "autoridad educativa"
     ],
     debiles: [
-      "instituciones educativas",
-      "planes de estudio",
-      "personal docente",
-      "estudiantes",
-      "servicios educativos",
-      "educacion publica"
+      "instituciones educativas", "planes de estudio",
+      "personal docente", "estudiantes"
     ]
   },
 
@@ -714,15 +586,11 @@ const REGLAS_JURIDICAS = {
       "derecho deportivo",
       "materia deportiva",
       "legislacion deportiva",
-      "comision nacional de cultura fisica y deporte",
-      "justicia deportiva"
+      "comision nacional de cultura fisica y deporte"
     ],
     debiles: [
-      "deporte",
-      "deportistas",
-      "federaciones deportivas",
-      "entrenadores",
-      "competencias deportivas"
+      "deporte", "deportistas",
+      "federaciones deportivas", "entrenadores"
     ]
   },
 
@@ -732,15 +600,11 @@ const REGLAS_JURIDICAS = {
       "derecho turistico",
       "materia turistica",
       "legislacion turistica",
-      "prestadores de servicios turisticos",
-      "politica nacional turistica"
+      "prestadores de servicios turisticos"
     ],
     debiles: [
-      "turismo",
-      "actividad turistica",
-      "destinos turisticos",
-      "servicios turisticos",
-      "promocion turistica"
+      "turismo", "actividad turistica",
+      "destinos turisticos", "servicios turisticos"
     ]
   },
 
@@ -751,16 +615,11 @@ const REGLAS_JURIDICAS = {
       "derecho de la cultura",
       "materia cultural",
       "patrimonio cultural",
-      "derechos culturales",
-      "instituciones culturales"
+      "derechos culturales"
     ],
     debiles: [
-      "cultura",
-      "museos",
-      "monumentos historicos",
-      "bienes culturales",
-      "actividades culturales",
-      "patrimonio artistico"
+      "cultura", "museos", "monumentos historicos",
+      "bienes culturales", "patrimonio artistico"
     ]
   },
 
@@ -769,25 +628,19 @@ const REGLAS_JURIDICAS = {
       "ley federal de proteccion al consumidor",
       "derecho del consumidor",
       "derecho de consumo",
-      "materia de consumo",
       "proteccion al consumidor",
       "procuraduria federal del consumidor",
       "relaciones de consumo"
     ],
     debiles: [
-      "consumidores",
-      "proveedores",
-      "publicidad engañosa",
-      "garantias de productos",
-      "quejas de consumidores",
-      "bienes y servicios"
+      "consumidores", "proveedores",
+      "publicidad engañosa", "garantias de productos"
     ]
   },
 
   "Derecho Energético": {
     fuertes: [
       "derecho energetico",
-      "materia energetica",
       "ley del sector electrico",
       "ley del sector hidrocarburos",
       "industria electrica",
@@ -795,12 +648,8 @@ const REGLAS_JURIDICAS = {
       "regulacion energetica"
     ],
     debiles: [
-      "energia electrica",
-      "hidrocarburos",
-      "petroleo",
-      "gas natural",
-      "electricidad",
-      "sector energetico"
+      "energia electrica", "hidrocarburos",
+      "petroleo", "gas natural", "electricidad"
     ]
   },
 
@@ -808,47 +657,131 @@ const REGLAS_JURIDICAS = {
     fuertes: [
       "ley en materia de telecomunicaciones",
       "derecho de las telecomunicaciones",
-      "materia de telecomunicaciones",
       "regulacion de telecomunicaciones",
       "radiodifusion",
       "espectro radioelectrico",
       "servicios de telecomunicaciones"
     ],
     debiles: [
-      "telecomunicaciones",
-      "telefonia",
-      "internet",
-      "concesion de frecuencias",
-      "redes publicas",
-      "radiodifusoras"
+      "telecomunicaciones", "telefonia",
+      "internet", "redes publicas", "radiodifusoras"
     ]
   }
-
 };
 
-// --------------------------------------------------
-// CLASIFICADOR JURÍDICO
-// --------------------------------------------------
+// ==================================================
+// CLASIFICACIÓN DE MATERIAS
+// ==================================================
 
 function clasificarPublicacion(texto, titulo = "") {
   const contenido = normalizarTexto(texto);
-  const tituloNormalizado = normalizarTexto(titulo);
-
+  const tituloN = normalizarTexto(titulo);
   const detalles = [];
 
   for (const [materia, reglas] of Object.entries(REGLAS_JURIDICAS)) {
-
     let puntuacion = 0;
+    let hitsTitulo = 0;
     const motivos = [];
-    let coincidenciasTitulo = 0;
 
-    reglas.fuertes.forEach(frase => {
+    for (const frase of reglas.fuertes) {
       const clave = normalizarTexto(frase);
 
-      if (tituloNormalizado.includes(clave)) {
-        puntuacion += 7;
-        coincidenciasTitulo++;
+      if (tituloN.includes(clave)) {
+        puntuacion += 9;
+        hitsTitulo++;
         motivos.push(frase + " (título)");
       } else if (contenido.includes(clave)) {
         puntuacion += 4;
+        motivos.push(frase);
+      }
+    }
+
+    for (const frase of reglas.debiles) {
+      const clave = normalizarTexto(frase);
+
+      if (tituloN.includes(clave)) {
+        puntuacion += 3;
+        hitsTitulo++;
+        motivos.push(frase + " (título)");
+      } else if (contenido.includes(clave)) {
+        puntuacion += 1;
+        motivos.push(frase);
+      }
+    }
+
+    if (puntuacion > 0) {
+      detalles.push({
+        materia,
+        puntuacion,
+        hitsTitulo,
         motivos
+      });
+    }
+  }
+
+  detalles.sort((a, b) => b.puntuacion - a.puntuacion);
+
+  const principal = detalles.find(d =>
+    d.puntuacion >= 4 || d.hitsTitulo > 0
+  );
+
+  const candidatas = detalles.filter(d =>
+    d !== principal && d.puntuacion >= 4
+  );
+
+  const secundarias = principal
+    ? candidatas.filter(d =>
+        d.puntuacion >= Math.max(4, principal.puntuacion * 0.55)
+      )
+    : [];
+
+  let confianza = "Baja";
+
+  if (principal) {
+    if (
+      principal.hitsTitulo >= 1 ||
+      principal.puntuacion >= 9
+    ) {
+      confianza = "Alta";
+    } else if (principal.puntuacion >= 4) {
+      confianza = "Media";
+    }
+  }
+
+  return {
+    materiaPrincipal: principal ? principal.materia : null,
+    materias: principal
+      ? [principal.materia, ...secundarias.map(d => d.materia)]
+      : [],
+    secundarias: secundarias.map(d => d.materia),
+    candidatas: candidatas.map(d => d.materia),
+    detalles,
+    confianza
+  };
+}
+
+// ==================================================
+// TIPO DOCUMENTAL
+// ==================================================
+
+function detectarTipoDocumental(titulo, texto) {
+  const t = normalizarTexto(titulo);
+  const c = normalizarTexto(texto);
+
+  const tipos = [
+    ["Tratado internacional", ["tratado internacional"]],
+    ["Convención", ["convencion internacional"]],
+    ["Protocolo internacional", ["protocolo internacional"]],
+    ["Jurisprudencia", ["jurisprudencia"]],
+    ["Tesis aislada", ["tesis aislada"]],
+    ["Sentencia", ["sentencia"]],
+    ["Ejecutoria", ["ejecutoria"]],
+    ["Acuerdo judicial", ["acuerdo general del consejo de la judicatura"]],
+    ["Constitución", ["constitucion politica de los estados unidos mexicanos"]],
+    ["Código", ["codigo penal", "codigo civil", "codigo fiscal", "codigo de comercio", "codigo nacional"]],
+    ["Decreto", ["decreto"]],
+    ["Reforma o adición", ["reforma", "adicion"]],
+    ["Iniciativa de ley", ["iniciativa con proyecto de decreto"]],
+    ["Ley", ["ley general", "ley federal", "ley organica", "ley de"]],
+    ["Reglamento", ["reglamento"]],
+    ["Conven
