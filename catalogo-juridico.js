@@ -1,5 +1,4 @@
 const CATALOGO_JURIDICO = {
-
   materias: [
     "Constitucional",
     "Penal",
@@ -43,7 +42,6 @@ const CATALOGO_JURIDICO = {
   ],
 
   tiposDocumentales: {
-
     legislativo: [
       "Constitución",
       "Ley",
@@ -72,9 +70,13 @@ const CATALOGO_JURIDICO = {
       "Convenio",
       "Circular",
       "Lineamiento",
-      "Norma oficial",
-      "Regla de operación",
-      "Disposición administrativa"
+      "Norma oficial mexicana",
+      "Reglas de operación",
+      "Disposición administrativa",
+      "Resolución administrativa",
+      "Oficio administrativo",
+      "Convocatoria",
+      "Aviso"
     ],
 
     doctrinal: [
@@ -101,7 +103,6 @@ const CATALOGO_JURIDICO = {
       "Material didáctico",
       "Ejercicio jurídico"
     ]
-
   },
 
   ambitos: [
@@ -129,7 +130,6 @@ const CATALOGO_JURIDICO = {
     "Baja",
     "No determinada"
   ]
-
 };
 
 window.CATALOGO_JURIDICO = CATALOGO_JURIDICO;
