@@ -794,9 +794,7 @@ function prepararFiltros() {
   materias.forEach(materia => {
     const existe = Array.from(select.options).some(
       opcion => opcion.value === materia
-    )
-
-  ;
+    );
 
   if (!existe) {
     const opcion = document.createElement("option");
