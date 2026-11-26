@@ -520,6 +520,120 @@ function clasificarPublicacion(titulo, dependencia) {
 
   const resultados = [];
 
+  // Expresiones jurídicas específicas:
+  // tienen mayor valor que las palabras generales.
+  const expresionesEspecificas = [
+    "ley federal",
+    "ley general",
+    "codigo nacional",
+    "codigo penal",
+    "codigo civil",
+    "codigo fiscal",
+    "codigo de comercio",
+    "constitucion politica",
+    "ley organica",
+    "reglamento de la ley",
+    "ley de amparo",
+    "ley del seguro social",
+    "ley federal del trabajo",
+    "ley general de salud",
+    "ley de migracion",
+    "juicio de amparo",
+    "tribunal federal de justicia administrativa",
+    "comision nacional de los derechos humanos"
+  ];
+
+  for (const [materia, palabras] of Object.entries(REGLAS_JURIDICAS)) {
+    let puntuacion = 0;
+    const motivos = [];
+
+    for (const palabra of palabras) {
+      const termino = normalizarTexto(palabra);
+
+      if (!termino || !texto.includes(termino)) {
+        continue;
+      }
+
+      const esEspecifica =
+        expresionesEspecificas.some(expresion =>
+          termino.includes(expresion) ||
+          expresion.includes(termino)
+        );
+
+      puntuacion += esEspecifica ? 4 : 1;
+      motivos.push(palabra);
+    }
+
+    if (puntuacion > 0) {
+      resultados.push({
+        materia,
+        puntuacion,
+        motivos
+      });
+    }
+  }
+
+  resultados.sort((a, b) =>
+    b.puntuacion - a.puntuacion
+  );
+
+  const principal = resultados[0];
+
+  if (!principal) {
+    return {
+      materiaPrincipal: null,
+      materias: [],
+      secundarias: [],
+      detalles: [],
+      confianza: "Baja"
+    };
+  }
+
+  const segundoLugar = resultados[1];
+
+  const diferencia =
+    segundoLugar
+      ? principal.puntuacion - segundoLugar.puntuacion
+      : principal.puntuacion;
+
+  let confianza = "Baja";
+
+  if (
+    principal.puntuacion >= 4 &&
+    diferencia >= 2
+  ) {
+    confianza = "Alta";
+  } else if (
+    principal.puntuacion >= 2 &&
+    diferencia >= 1
+  ) {
+    confianza = "Media";
+  }
+
+  const secundarias = resultados
+    .slice(1)
+    .filter(resultado =>
+      resultado.puntuacion >= 2 &&
+      resultado.puntuacion >= principal.puntuacion * 0.5
+    );
+
+  return {
+    materiaPrincipal: principal.materia,
+    materias: [
+      principal.materia,
+      ...secundarias.map(resultado => resultado.materia)
+    ],
+    secundarias: secundarias.map(resultado => resultado.materia),
+    detalles: resultados,
+    confianza
+  };
+} {
+  const texto = normalizarTexto(
+    `${titulo} ${dependencia}`
+  );
+
+  const resultados = [];
+
   for (const [materia, palabras] of Object.entries(REGLAS_JURIDICAS)) {
     const coincidencias = palabras.filter(palabra =>
       texto.includes(normalizarTexto(palabra))
