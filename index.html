@@ -3,12 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>LEGISLATIVO MX | Monitor Legislativo</title>
-
-  <meta name="description" content="Consulta novedades legislativas, reformas y publicaciones oficiales de México.">
+  <meta name="description" content="Monitor jurídico y legislativo de México.">
   <meta name="theme-color" content="#102747">
-
   <link rel="manifest" href="./manifest.json">
 
   <style>
@@ -19,21 +16,21 @@
     }
 
     body {
-      font-family: Arial, Helvetica, sans-serif;
+      font-family: Arial, sans-serif;
       background: #f3f5f8;
       color: #243247;
       line-height: 1.6;
     }
 
-    header {
+    header, footer {
       background: #102747;
       color: white;
       text-align: center;
-      padding: 28px 15px;
+      padding: 25px 15px;
     }
 
     .logo {
-      font-size: 30px;
+      font-size: 29px;
       font-weight: bold;
       letter-spacing: 2px;
     }
@@ -45,7 +42,6 @@
     header p {
       font-size: 12px;
       letter-spacing: 2px;
-      margin-top: 5px;
     }
 
     nav {
@@ -53,7 +49,7 @@
       display: flex;
       justify-content: center;
       flex-wrap: wrap;
-      gap: 25px;
+      gap: 22px;
       padding: 13px;
     }
 
@@ -63,21 +59,16 @@
       font-size: 14px;
     }
 
-    nav a:hover {
-      color: #d6b45d;
-    }
-
     .hero {
       background: linear-gradient(135deg, #102747, #244b78);
       color: white;
-      padding: 55px 20px;
       text-align: center;
+      padding: 48px 20px;
     }
 
     .hero h1 {
-      font-size: 34px;
-      line-height: 1.25;
-      margin-bottom: 15px;
+      font-size: 32px;
+      margin-bottom: 12px;
     }
 
     .hero p {
@@ -87,135 +78,170 @@
     }
 
     main {
-      max-width: 1100px;
+      max-width: 1150px;
       margin: 35px auto;
-      padding: 0 20px;
+      padding: 0 18px;
     }
 
     .section-title {
       color: #102747;
-      font-size: 24px;
-      margin-bottom: 20px;
+      font-size: 23px;
+      margin-bottom: 18px;
       border-left: 5px solid #d6b45d;
       padding-left: 12px;
     }
 
-    .tools {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
+    .panel {
+      background: white;
+      border: 1px solid #e0e5ec;
+      border-radius: 9px;
+      padding: 18px;
       margin-bottom: 20px;
     }
 
-    input,
-    select {
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat {
+      background: white;
+      padding: 18px;
+      border-radius: 8px;
+      border: 1px solid #e0e5ec;
+    }
+
+    .stat strong {
+      display: block;
+      color: #102747;
+      font-size: 26px;
+    }
+
+    .stat span {
+      font-size: 13px;
+      color: #697789;
+    }
+
+    .tools {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    input, select {
       padding: 13px;
       border: 1px solid #cbd3df;
       border-radius: 6px;
-      font-size: 14px;
       background: white;
-      min-width: 220px;
+      font-size: 14px;
+      min-width: 200px;
     }
 
     input {
       flex: 1;
     }
 
-    #search-button {
-      padding: 13px 25px;
+    button {
+      padding: 12px 20px;
       background: #102747;
       color: white;
       border: none;
-      border-radius: 7px;
-      font-weight: bold;
+      border-radius: 6px;
       cursor: pointer;
+      font-weight: bold;
     }
 
-    #search-button:hover {
+    button:hover {
       background: #244b78;
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: not-allowed;
     }
 
     #dof-status {
       background: white;
-      padding: 15px;
-      border-radius: 6px;
-      margin-bottom: 18px;
       border-left: 4px solid #d6b45d;
-      color: #33445b;
+      padding: 15px;
+      margin-bottom: 18px;
+      border-radius: 6px;
     }
 
     #juria-diagnostico {
       background: #eef4fb;
       border: 1px solid #b8cce3;
-      border-radius: 10px;
-      padding: 15px;
-      margin-bottom: 20px;
       color: #102747;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
     }
 
     .news {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      gap: 17px;
     }
 
     .card {
       background: white;
-      padding: 20px;
-      border-radius: 7px;
+      padding: 19px;
+      border-radius: 8px;
       border: 1px solid #e0e5ec;
-      box-shadow: 0 3px 10px rgba(16, 39, 71, 0.05);
+      box-shadow: 0 3px 10px rgba(16,39,71,.05);
+      overflow-wrap: anywhere;
     }
 
     .card h3 {
       color: #102747;
-      font-size: 17px;
+      font-size: 16px;
       margin-bottom: 12px;
     }
 
     .card p {
       color: #526174;
-      font-size: 14px;
+      font-size: 13px;
       margin-bottom: 8px;
-    }
-
-    .card small {
-      display: block;
-      color: #697789;
-      margin-bottom: 14px;
     }
 
     .card a {
       display: inline-block;
       color: #174d83;
       font-weight: bold;
-      font-size: 14px;
-      text-decoration: none;
-    }
-
-    .card a:hover {
-      text-decoration: underline;
-    }
-
-    .notice {
-      margin-top: 25px;
-      padding: 15px;
-      background: #e9eef5;
-      border-radius: 6px;
-      color: #43546a;
+      margin-top: 10px;
       font-size: 13px;
     }
 
-    .materias,
-    .fuentes {
-      margin-top: 35px;
+    .tag {
+      display: inline-block;
+      background: #eef4fb;
+      color: #174d83;
+      padding: 4px 8px;
+      border-radius: 5px;
+      font-size: 11px;
+      margin: 3px;
+    }
+
+    .notice {
+      background: #e9eef5;
+      padding: 15px;
+      margin-top: 25px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .materias, .fuentes {
       background: white;
       padding: 22px;
-      border-radius: 7px;
+      border-radius: 8px;
+      margin-top: 30px;
     }
 
     .materias p {
-      line-height: 2;
+      line-height: 2.2;
     }
 
     .fuentes a {
@@ -223,45 +249,19 @@
     }
 
     footer {
-      background: #102747;
-      color: white;
-      text-align: center;
-      padding: 25px 15px;
       margin-top: 50px;
-      font-size: 14px;
     }
 
     footer p {
-      color: #d5deea;
       font-size: 12px;
-      margin-top: 5px;
+      color: #d5deea;
     }
 
-    @media (max-width: 600px) {
-      .logo {
-        font-size: 25px;
-      }
-
-      .hero h1 {
-        font-size: 27px;
-      }
-
-      nav {
-        gap: 15px;
-      }
-
-      nav a {
-        font-size: 13px;
-      }
-
-      input,
-      select {
-        width: 100%;
-      }
-
-      #search-button {
-        width: 100%;
-      }
+    @media(max-width: 600px) {
+      .logo { font-size: 24px; }
+      .hero h1 { font-size: 26px; }
+      input, select, .tools button { width: 100%; }
+      nav { gap: 12px; }
     }
   </style>
 </head>
@@ -282,10 +282,7 @@
 
 <section class="hero">
   <h1>Las leyes cambian.<br>Tú debes estar informado.</h1>
-  <p>
-    Consulta novedades legislativas, reformas y publicaciones
-    oficiales de México desde una sola plataforma.
-  </p>
+  <p>Consulta novedades legislativas, reformas y publicaciones oficiales de México desde una sola plataforma.</p>
 </section>
 
 <main id="novedades">
@@ -296,32 +293,34 @@
     Comprobando conexión con JURIA...
   </div>
 
+  <div class="stats">
+    <div class="stat">
+      <strong id="stat-total">0</strong>
+      <span>Publicaciones encontradas</span>
+    </div>
+    <div class="stat">
+      <strong id="stat-identificadas">0</strong>
+      <span>Materias identificadas</span>
+    </div>
+    <div class="stat">
+      <strong id="stat-otras">0</strong>
+      <span>Otras publicaciones</span>
+    </div>
+    <div class="stat">
+      <strong id="stat-pendientes">0</strong>
+      <span>Pendientes de clasificación</span>
+    </div>
+  </div>
+
   <div class="tools">
-
-    <input
-      type="text"
-      id="search"
-      placeholder="Buscar leyes, reformas o temas..."
-    >
-
-    <button type="button" id="search-button">
-      BUSCAR
-    </button>
-
+    <input id="search" type="search" placeholder="Buscar leyes, reformas o temas...">
     <select id="category">
       <option value="todos">Todas las publicaciones</option>
-      <option value="Penal">Derecho penal</option>
-      <option value="Laboral">Derecho laboral</option>
-      <option value="Fiscal">Derecho fiscal</option>
-      <option value="Familiar">Derecho familiar</option>
-      <option value="Constitucional">Derecho constitucional</option>
-      <option value="Administrativo">Derecho administrativo</option>
-      <option value="Civil">Derecho civil</option>
-      <option value="Mercantil">Derecho mercantil</option>
       <option value="otras">Otras publicaciones</option>
       <option value="pendientes">Pendientes de clasificación</option>
     </select>
-
+    <button id="search-button" type="button">BUSCAR</button>
+    <button id="refresh-button" type="button">ACTUALIZAR</button>
   </div>
 
   <div id="dof-status">
@@ -331,27 +330,24 @@
   <div id="dof-results" class="news"></div>
 
   <div class="notice">
-    LEGISLATIVO MX consulta publicaciones del Diario Oficial
-    de la Federación. La clasificación jurídica y el monitoreo
-    automático de nuevas reformas se encuentran en desarrollo.
+    Las clasificaciones de JURIA son orientativas y se basan en reglas de identificación textual. Deben verificarse con el documento oficial.
   </div>
 
   <section id="materias" class="materias">
     <h2 class="section-title">Materias jurídicas</h2>
-    <p id="materias-list">
-      Cargando catálogo jurídico...
-    </p>
+    <p id="materias-list">Cargando catálogo jurídico...</p>
   </section>
 
   <section id="fuentes" class="fuentes">
     <h2 class="section-title">Fuentes oficiales</h2>
     <p>
-      <a
-        href="https://www.dof.gob.mx/"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
+      <a href="https://www.dof.gob.mx/" target="_blank" rel="noopener noreferrer">
         Diario Oficial de la Federación
+      </a>
+    </p>
+    <p>
+      <a href="https://sidof.segob.gob.mx/datos_abiertos" target="_blank" rel="noopener noreferrer">
+        Datos abiertos del SIDOF
       </a>
     </p>
   </section>
@@ -363,97 +359,15 @@
   <p>Información legislativa de México</p>
 </footer>
 
-<script>
-const search = document.getElementById("search");
-const category = document.getElementById("category");
-
-function filterNews() {
-  const term = search.value.toLowerCase().trim();
-  const selected = category.value;
-
-  const cards = document.querySelectorAll("#dof-results .card");
-
-  cards.forEach(card => {
-    const text = card.innerText.toLowerCase();
-    const materias = (card.dataset.materias || "").split("|");
-
-    const matchesText = text.includes(term);
-
-    let matchesCategory = true;
-
-    if (selected === "otras") {
-      matchesCategory = card.dataset.clasificacion === "otras";
-    } else if (selected === "pendientes") {
-      matchesCategory = card.dataset.clasificacion === "pendientes";
-    } else if (selected !== "todos") {
-      matchesCategory = materias.includes(selected);
-    }
-
-    card.style.display =
-      matchesText && matchesCategory ? "block" : "none";
-  });
-}
-
-document.getElementById("search-button")
-  .addEventListener("click", filterNews);
-
-search.addEventListener("input", filterNews);
-category.addEventListener("change", filterNews);
-</script>
-
-<!-- CARGA DEL CATÁLOGO JURÍDICO -->
 <script src="./catalogo-juridico.js"></script>
+<script src="./dof.js?v=11"></script>
 
-<script>
-(function() {
-  const panel = document.getElementById("juria-diagnostico");
-  const listaMaterias = document.getElementById("materias-list");
-
-  if (window.CATALOGO_JURIDICO) {
-
-    const materias = CATALOGO_JURIDICO.materias;
-
-    panel.textContent =
-      "JURIA está conectada correctamente. " +
-      materias.length +
-      " materias jurídicas disponibles.";
-
-    listaMaterias.textContent = materias.join(" · ");
-
-    materias.forEach(materia => {
-      const existe = Array.from(category.options).some(
-        option => option.value === materia
-      );
-
-      if (!existe) {
-        const option = document.createElement("option");
-        option.value = materia;
-        option.textContent = "Derecho " + materia;
-        category.appendChild(option);
-      }
-    });
-
-  } else {
-
-    panel.textContent =
-      "Error: no se pudo cargar el catálogo jurídico.";
-
-    listaMaterias.textContent =
-      "No fue posible cargar las materias jurídicas.";
-  }
-})();
-</script>
-
-<!-- CARGA DEL MONITOR DEL DOF -->
-<script src="./dof.js?v=10"></script>
-
-<!-- REGISTRO ÚNICO DEL SERVICE WORKER -->
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=3")
-      .then(() => console.log("LEGISLATIVO MX está listo"))
-      .catch(error => console.error("Error:", error));
+    navigator.serviceWorker.register("./sw.js?v=4")
+      .then(() => console.log("Service Worker registrado"))
+      .catch(error => console.error("Error del Service Worker:", error));
   });
 }
 </script>
