@@ -1,4 +1,4 @@
-"use strict";
+   "use strict";
 
 // ==================================================
 // LEGISLATIVO MX - MONITOR DEL DIARIO OFICIAL
@@ -278,7 +278,7 @@ const REGLAS_JURIDICAS = {
     "conflicto de jurisdicciones",
     "competencia judicial internacional",
     "contratos internacionales"
-  ],
+  ], 
 
   "Derechos Humanos": [
     "comision nacional de los derechos humanos",
@@ -784,9 +784,15 @@ function actualizarEstadisticas() {
 function prepararFiltros() {
   const select = elementosDOF.categoria;
 
-  if (!select || !window.CATALOGO_JURIDICO) return;
+  const catalogo =
+    window.CATALOGO_JURIDICO ||
+    (typeof CATALOGO_JURIDICO !== "undefined"
+      ? CATALOGO_JURIDICO
+      : null);
 
-  const materias = CATALOGO_JURIDICO.materias;
+  if (!select || !catalogo) return;
+
+  const materias = catalogo.materias;
 
   materias.forEach(materia => {
     const existe = Array.from(select.options).some(
