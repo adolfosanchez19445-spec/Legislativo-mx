@@ -144,6 +144,15 @@
       color: #33445b;
     }
 
+    #juria-diagnostico {
+      background: #eef4fb;
+      border: 1px solid #b8cce3;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+      color: #102747;
+    }
+
     .news {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -283,7 +292,12 @@
 
   <h2 class="section-title">Monitor legislativo</h2>
 
+  <div id="juria-diagnostico">
+    Comprobando conexión con JURIA...
+  </div>
+
   <div class="tools">
+
     <input
       type="text"
       id="search"
@@ -295,19 +309,19 @@
     </button>
 
     <select id="category">
-  <option value="todos">Todas las publicaciones</option>
-  <option value="Penal">Derecho penal</option>
-  <option value="Laboral">Derecho laboral</option>
-  <option value="Fiscal">Derecho fiscal</option>
-  <option value="Familiar">Derecho familiar</option>
-  <option value="Constitucional">Derecho constitucional</option>
-  <option value="Administrativo">Derecho administrativo</option>
-  <option value="Civil">Derecho civil</option>
-  <option value="Mercantil">Derecho mercantil</option>
-  <option value="otras">Otras publicaciones</option>
-  <option value="pendientes">Pendientes de clasificación</option>
-</select>
+      <option value="todos">Todas las publicaciones</option>
+      <option value="Penal">Derecho penal</option>
+      <option value="Laboral">Derecho laboral</option>
+      <option value="Fiscal">Derecho fiscal</option>
+      <option value="Familiar">Derecho familiar</option>
+      <option value="Constitucional">Derecho constitucional</option>
+      <option value="Administrativo">Derecho administrativo</option>
+      <option value="Civil">Derecho civil</option>
+      <option value="Mercantil">Derecho mercantil</option>
+      <option value="otras">Otras publicaciones</option>
+      <option value="pendientes">Pendientes de clasificación</option>
     </select>
+
   </div>
 
   <div id="dof-status">
@@ -324,9 +338,8 @@
 
   <section id="materias" class="materias">
     <h2 class="section-title">Materias jurídicas</h2>
-    <p>
-      Penal · Laboral · Familiar · Fiscal · Constitucional ·
-      Administrativo · Civil · Mercantil
+    <p id="materias-list">
+      Cargando catálogo jurídico...
     </p>
   </section>
 
@@ -353,52 +366,6 @@
 <script>
 const search = document.getElementById("search");
 const category = document.getElementById("category");
-
-const palabrasPorMateria = {
-  Penal: [
-    "penal", "delito", "delincuencia", "feminicidio",
-    "homicidio", "robo", "criminal", "justicia penal"
-  ],
-
-  Laboral: [
-    "laboral", "trabajo", "trabajador", "trabajadores",
-    "sindicato", "salario", "salarios", "prestaciones",
-    "seguridad social"
-  ],
-
-  Fiscal: [
-    "fiscal", "impuesto", "impuestos", "tributario",
-    "contribuciones", "sat", "isr", "iva"
-  ],
-
-  Familiar: [
-    "familiar", "familia", "divorcio", "matrimonio",
-    "alimentos", "pensión alimenticia", "adopción",
-    "filiación"
-  ],
-
-  Constitucional: [
-    "constitución", "constitucional", "derechos humanos",
-    "garantías", "reforma constitucional", "amparo"
-  ],
-
-  Administrativo: [
-    "administrativo", "administración pública",
-    "secretaría", "dependencia", "servidores públicos",
-    "concesión", "reglamento"
-  ],
-
-  Civil: [
-    "civil", "contrato civil", "responsabilidad civil",
-    "propiedad", "arrendamiento", "sucesión"
-  ],
-
-  Mercantil: [
-    "mercantil", "comercio", "comercial", "sociedades",
-    "sociedad anónima", "títulos de crédito",
-    "concurso mercantil"
-  ]
-};
 
 function filterNews() {
   const term = search.value.toLowerCase().trim();
@@ -434,59 +401,62 @@ search.addEventListener("input", filterNews);
 category.addEventListener("change", filterNews);
 </script>
 
+<!-- CARGA DEL CATÁLOGO JURÍDICO -->
+<script src="./catalogo-juridico.js"></script>
+
+<script>
+(function() {
+  const panel = document.getElementById("juria-diagnostico");
+  const listaMaterias = document.getElementById("materias-list");
+
+  if (window.CATALOGO_JURIDICO) {
+
+    const materias = CATALOGO_JURIDICO.materias;
+
+    panel.textContent =
+      "JURIA está conectada correctamente. " +
+      materias.length +
+      " materias jurídicas disponibles.";
+
+    listaMaterias.textContent = materias.join(" · ");
+
+    materias.forEach(materia => {
+      const existe = Array.from(category.options).some(
+        option => option.value === materia
+      );
+
+      if (!existe) {
+        const option = document.createElement("option");
+        option.value = materia;
+        option.textContent = "Derecho " + materia;
+        category.appendChild(option);
+      }
+    });
+
+  } else {
+
+    panel.textContent =
+      "Error: no se pudo cargar el catálogo jurídico.";
+
+    listaMaterias.textContent =
+      "No fue posible cargar las materias jurídicas.";
+  }
+})();
+</script>
+
+<!-- CARGA DEL MONITOR DEL DOF -->
+<script src="./dof.js?v=9"></script>
+
+<!-- REGISTRO ÚNICO DEL SERVICE WORKER -->
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=2")
+    navigator.serviceWorker.register("./sw.js?v=3")
       .then(() => console.log("LEGISLATIVO MX está listo"))
       .catch(error => console.error("Error:", error));
   });
 }
 </script>
 
-<div id="juria-diagnostico" style="
-  background: #eef4fb;
-  border: 1px solid #b8cce3;
-  border-radius: 10px;
-  padding: 15px;
-  margin: 15px 0;
-  color: #102747;
-">
-  Comprobando JURIA...
-</div>
-
-<script src="./catalogo-juridico.js"></script>
-
-<script>
-(function() {
-  const panel = document.getElementById("juria-diagnostico");
-
-  if (window.CATALOGO_JURIDICO) {
-    panel.textContent =
-      "JURIA está conectada correctamente. " +
-      CATALOGO_JURIDICO.materias.length +
-      " materias jurídicas disponibles.";
-  } else {
-    panel.textContent =
-      "Error: no se pudo cargar el catálogo jurídico.";
-  }
-})();
-</script>
-  <script>
-  document.addEventListener("DOMContentLoaded", function() {
-    console.log("JURIA está funcionando");
-    console.log("Materias:", CATALOGO_JURIDICO.materias.length);
-    console.log("Tipos documentales:", CATALOGO_JURIDICO.tiposDocumentales);
-  });
-</script>
-<script src="./dof.js?v=9"></script>
-
-<script>
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./sw.js")
-      .then(() => console.log("Service Worker registrado"))
-      .catch(error => console.error("Error:", error));
-  }
-</script>
 </body>
 </html>
