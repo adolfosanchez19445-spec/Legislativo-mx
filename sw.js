@@ -1,11 +1,11 @@
-const CACHE_NAME = "legislativo-mx-v2";
+const CACHE_NAME = "legislativo-mx-v3";
 
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
   "./manifest.json",
   "./catalogo-juridico.js",
-  "./dof.js?v=8"
+  "./dof.js?v=9"
 ];
 
 self.addEventListener("install", event => {
