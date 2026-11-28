@@ -1,4 +1,16 @@
+"use strict";
+
+// ==================================================
+// LEGISLATIVO MX
+// CATÁLOGO JURÍDICO GENERAL
+// ==================================================
+
 const CATALOGO_JURIDICO = {
+
+  // ==================================================
+  // MATERIAS JURÍDICAS
+  // ==================================================
+
   materias: [
     "Constitucional",
     "Penal",
@@ -41,7 +53,25 @@ const CATALOGO_JURIDICO = {
     "Derecho de Telecomunicaciones"
   ],
 
+  // ==================================================
+  // GRUPOS DOCUMENTALES
+  // ==================================================
+
+  gruposDocumentales: [
+    "Legislativo",
+    "Normativo",
+    "Judicial",
+    "Administrativo",
+    "Internacional",
+    "Doctrinal"
+  ],
+
+  // ==================================================
+  // TIPOS DOCUMENTALES
+  // ==================================================
+
   tiposDocumentales: {
+
     legislativo: [
       "Constitución",
       "Ley",
@@ -51,8 +81,15 @@ const CATALOGO_JURIDICO = {
       "Adición",
       "Derogación",
       "Abrogación",
-      "Reglamento",
       "Iniciativa de ley"
+    ],
+
+    normativo: [
+      "Reglamento",
+      "Norma oficial mexicana",
+      "Lineamiento",
+      "Reglas de operación",
+      "Disposición general"
     ],
 
     judicial: [
@@ -69,22 +106,11 @@ const CATALOGO_JURIDICO = {
       "Acuerdo administrativo",
       "Convenio",
       "Circular",
-      "Lineamiento",
-      "Norma oficial mexicana",
-      "Reglas de operación",
-      "Disposición administrativa",
       "Resolución administrativa",
       "Oficio administrativo",
       "Convocatoria",
-      "Aviso"
-    ],
-
-    doctrinal: [
-      "Libro jurídico",
-      "Artículo académico",
-      "Ensayo jurídico",
-      "Investigación",
-      "Comentario doctrinal"
+      "Aviso",
+      "Declaratoria"
     ],
 
     internacional: [
@@ -95,6 +121,14 @@ const CATALOGO_JURIDICO = {
       "Decisión de tribunal internacional"
     ],
 
+    doctrinal: [
+      "Libro jurídico",
+      "Artículo académico",
+      "Ensayo jurídico",
+      "Investigación",
+      "Comentario doctrinal"
+    ],
+
     academico: [
       "Guía de estudio",
       "Caso práctico",
@@ -103,7 +137,12 @@ const CATALOGO_JURIDICO = {
       "Material didáctico",
       "Ejercicio jurídico"
     ]
+
   },
+
+  // ==================================================
+  // ÁMBITOS JURÍDICOS
+  // ==================================================
 
   ambitos: [
     "Federal",
@@ -113,6 +152,10 @@ const CATALOGO_JURIDICO = {
     "Extranjero",
     "Comparado"
   ],
+
+  // ==================================================
+  // SISTEMAS JURÍDICOS
+  // ==================================================
 
   sistemasJuridicos: [
     "Mexicano",
@@ -124,12 +167,21 @@ const CATALOGO_JURIDICO = {
     "Sistema Internacional"
   ],
 
+  // ==================================================
+  // NIVELES DE CONFIANZA
+  // ==================================================
+
   nivelesConfianza: [
     "Alta",
     "Media",
     "Baja",
     "No determinada"
   ]
+
 };
+
+// ==================================================
+// DISPONIBILIDAD GLOBAL
+// ==================================================
 
 window.CATALOGO_JURIDICO = CATALOGO_JURIDICO;
