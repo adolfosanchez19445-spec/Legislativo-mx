@@ -964,14 +964,19 @@ async function consultarDOF() {
           });
         }
 
-      } catch (error) {
-        errores++;
+     } catch (error) {
+  errores++;
 
-        console.warn(
-          `Error al consultar el DOF del ${fechaConsulta}:`,
-          error
-        );
-      }
+  console.error(
+    `Error al consultar el DOF del ${fechaConsulta}:`,
+    error
+  );
+
+  if (elementosDOF.estado) {
+    elementosDOF.estado.textContent =
+      `Error consultando ${fechaConsulta}: ${error.message || error}`;
+  }
+}
 
       await esperar(ESPERA_ENTRE_NOTAS);
     }
