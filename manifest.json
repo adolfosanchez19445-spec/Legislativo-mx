@@ -1,7 +1,7 @@
 {
   "name": "LEGISLATIVO MX",
   "short_name": "LEGISLATIVO MX",
-  "description": "Plataforma de monitoreo legislativo de México.",
+  "description": "Plataforma de monitoreo legislativo y jurídico de México.",
   "lang": "es-MX",
   "start_url": "./index.html",
   "scope": "./",
