@@ -1,18 +1,19 @@
-   "use strict";
+"use strict";
 
 // ==================================================
-// LEGISLATIVO MX - MONITOR DEL DIARIO OFICIAL
+// LEGISLATIVO MX
+// MOTOR DE CONSULTA Y CLASIFICACIÓN DEL DOF
 // ==================================================
 
 const DOF_API = "https://sidof.segob.gob.mx/dof/sidof";
 const DIAS_CONSULTA = 7;
-const ESPERA_ENTRE_NOTAS = 250;
+const ESPERA_ENTRE_NOTAS = 200;
 
 let publicacionesDOF = [];
 let consultaEnCurso = false;
 
 // ==================================================
-// ELEMENTOS HTML
+// ELEMENTOS DE LA INTERFAZ
 // ==================================================
 
 const elementosDOF = {
@@ -21,8 +22,8 @@ const elementosDOF = {
   diagnostico: document.getElementById("juria-diagnostico"),
   busqueda: document.getElementById("search"),
   categoria: document.getElementById("category"),
-  buscar: document.getElementById("search-button"),
-  actualizar: document.getElementById("refresh-button"),
+  botonBuscar: document.getElementById("search-button"),
+  botonActualizar: document.getElementById("refresh-button"),
   total: document.getElementById("stat-total"),
   identificadas: document.getElementById("stat-identificadas"),
   otras: document.getElementById("stat-otras"),
@@ -31,36 +32,33 @@ const elementosDOF = {
 };
 
 // ==================================================
-// UTILIDADES
+// UTILIDADES GENERALES
 // ==================================================
 
-function obtenerFecha(diasAtras = 0) {
-  const fecha = new Date();
-  fecha.setDate(fecha.getDate() - diasAtras);
+function obtenerFecha(fecha = new Date()) {
+  const anio = fecha.getFullYear();
+  const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+  const dia = String(fecha.getDate()).padStart(2, "0");
 
-  return [
-    String(fecha.getDate()).padStart(2, "0"),
-    String(fecha.getMonth() + 1).padStart(2, "0"),
-    fecha.getFullYear()
-  ].join("-");
+  return `${anio}-${mes}-${dia}`;
 }
 
 function esperar(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function normalizarTexto(texto) {
-  return String(texto || "")
-    .toLowerCase()
+function normalizarTexto(texto = "") {
+  return String(texto)
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9\s]/g, " ")
+    .toLowerCase()
+    .replace(/[^\w\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
 
-function escaparHTML(texto) {
-  return String(texto || "").replace(/[&<>"']/g, caracter => ({
+function escaparHTML(texto = "") {
+  return String(texto).replace(/[&<>"']/g, caracter => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
@@ -69,699 +67,601 @@ function escaparHTML(texto) {
   })[caracter]);
 }
 
-function obtenerDependencia(nota) {
-  return [
-    nota.nombOrganismo,
-    nota.nombreOrganismo,
-    nota.nombreCodOrgaUno,
-    nota.nombreCodoOrgaUno,
-    nota.codOrgaDos,
-    nota.organismo,
-    nota.dependencia
-  ].find(valor =>
-    valor && String(valor).toLowerCase() !== "null"
-  ) || "Dependencia no identificada";
-}
-
-function obtenerTitulo(nota) {
-  return nota.titulo ||
-    nota.nombre ||
-    nota.descripcion ||
-    "Publicación sin título disponible";
-}
-
-function obtenerCodigo(nota) {
-  return nota.codNota || nota.codigo || "";
-}
-
-function obtenerFechaNota(nota) {
-  return nota.fecha || nota.fechaPublicacion || "";
-}
-
-function obtenerNotasRespuesta(datos) {
-  const grupos = [
-    datos.NotasMatutinas,
-    datos.NotasVespertinas,
-    datos.NotasExtraordinarias,
-    datos.Notas,
-    datos.notas
-  ];
-
-  return grupos.flatMap(grupo =>
-    Array.isArray(grupo) ? grupo : []
+function obtenerDependencia(nota = {}) {
+  return (
+    nota.organismo ||
+    nota.dependencia ||
+    nota.nombreOrganismo ||
+    nota.nombre_dependencia ||
+    nota.institucion ||
+    "Dependencia no identificada"
   );
 }
 
+function obtenerTitulo(nota = {}) {
+  return (
+    nota.titulo ||
+    nota.nombre ||
+    nota.descripcion ||
+    nota.rubro ||
+    nota.texto ||
+    "Publicación sin título"
+  );
+}
+
+function obtenerCodigo(nota = {}) {
+  return String(
+    nota.codNota ||
+    nota.codigo ||
+    nota.id ||
+    nota.cod_nota ||
+    ""
+  );
+}
+
+function obtenerFechaNota(nota = {}) {
+  return (
+    nota.fechaPublicacion ||
+    nota.fecha ||
+    nota.fecha_publicacion ||
+    nota.fechaNota ||
+    ""
+  );
+}
+
+function obtenerNotasRespuesta(datos) {
+  if (Array.isArray(datos)) return datos;
+
+  if (!datos || typeof datos !== "object") return [];
+
+  const posibles = [
+    datos.NotasMatutinas,
+    datos.notasMatutinas,
+    datos.notas,
+    datos.resultados,
+    datos.data,
+    datos.datos,
+    datos.response
+  ];
+
+  for (const elemento of posibles) {
+    if (Array.isArray(elemento)) return elemento;
+
+    if (elemento && typeof elemento === "object") {
+      const anidadas = obtenerNotasRespuesta(elemento);
+      if (anidadas.length) return anidadas;
+    }
+  }
+
+  return [];
+}
+
 // ==================================================
-// REGLAS JURÍDICAS
+// REGLAS DE CLASIFICACIÓN JURÍDICA
 // ==================================================
 
 const REGLAS_JURIDICAS = {
 
   "Constitucional": [
-    "constitucion politica de los estados unidos mexicanos",
-    "reforma constitucional",
-    "controversia constitucional",
-    "accion de inconstitucionalidad",
-    "control constitucional",
-    "supremacia constitucional",
-    "division de poderes"
+    "constitucion politica",
+    "constitucional",
+    "derechos fundamentales",
+    "poder ejecutivo",
+    "poder legislativo",
+    "poder judicial",
+    "federalismo",
+    "soberania"
   ],
 
   "Penal": [
-    "codigo penal federal",
     "codigo penal",
-    "derecho penal",
-    "delincuencia organizada",
-    "feminicidio",
-    "homicidio",
-    "robo",
-    "fraude",
+    "delito",
     "delitos",
-    "ministerio publico"
+    "penal",
+    "fiscalia",
+    "ministerio publico",
+    "carpeta de investigacion",
+    "sancion penal",
+    "reclusion"
   ],
 
   "Procesal Penal": [
     "codigo nacional de procedimientos penales",
-    "proceso penal acusatorio",
-    "sistema penal acusatorio",
-    "audiencia inicial",
-    "juicio oral penal",
-    "vinculacion a proceso",
-    "juez de control",
-    "carpeta de investigacion"
+    "procedimiento penal",
+    "proceso penal",
+    "justicia penal",
+    "audiencia penal",
+    "sistema penal acusatorio"
   ],
 
   "Civil": [
-    "codigo civil federal",
     "codigo civil",
-    "derecho civil",
     "responsabilidad civil",
+    "contrato civil",
     "obligaciones civiles",
-    "arrendamiento",
-    "daño moral"
+    "bienes inmuebles",
+    "derechos reales"
   ],
 
   "Familiar": [
-    "codigo nacional de procedimientos civiles y familiares",
     "derecho familiar",
-    "pension alimenticia",
-    "guarda y custodia",
-    "patria potestad",
-    "violencia familiar",
+    "familia",
+    "matrimonio",
     "divorcio",
+    "pension alimenticia",
+    "alimentos",
     "adopcion",
-    "filiacion"
+    "filiacion",
+    "patria potestad",
+    "guarda y custodia"
   ],
 
   "Mercantil": [
     "codigo de comercio",
-    "derecho mercantil",
-    "concurso mercantil",
-    "sociedades mercantiles",
+    "sociedad mercantil",
+    "comercio",
+    "comerciante",
     "titulos de credito",
-    "sociedad anonima",
+    "concurso mercantil",
     "operaciones mercantiles"
   ],
 
   "Laboral": [
     "ley federal del trabajo",
-    "derecho laboral",
-    "contrato colectivo de trabajo",
+    "trabajo",
+    "trabajadores",
+    "trabajador",
+    "patron",
     "relaciones laborales",
-    "justicia laboral",
+    "salario minimo",
     "sindicato",
-    "jornada laboral",
-    "huelga"
+    "huelga",
+    "contrato colectivo"
   ],
 
   "Administrativo": [
-    "derecho administrativo",
-    "procedimiento administrativo",
-    "acto administrativo",
-    "responsabilidad administrativa",
     "administracion publica",
-    "contratacion publica",
-    "licitacion publica",
-    "concesion administrativa",
-    "revocacion de autorizacion",
+    "procedimiento administrativo",
     "servidores publicos",
-    "sanciones administrativas"
+    "dependencias",
+    "organismos publicos",
+    "responsabilidades administrativas",
+    "servicio publico"
   ],
 
   "Fiscal": [
     "codigo fiscal de la federacion",
-    "ley del impuesto sobre la renta",
-    "ley del impuesto al valor agregado",
-    "derecho fiscal",
-    "creditos fiscales",
-    "resolucion miscelanea fiscal",
+    "impuesto",
     "impuestos",
     "contribuciones",
-    "recaudacion"
+    "sat",
+    "recaudacion",
+    "obligaciones fiscales",
+    "declaracion fiscal"
   ],
 
   "Financiero": [
-    "derecho financiero",
-    "sistema financiero mexicano",
-    "ley de instituciones de credito",
+    "sistema financiero",
     "instituciones financieras",
-    "operaciones financieras",
-    "servicios financieros",
-    "entidades financieras",
-    "financiamiento"
+    "hacienda y credito publico",
+    "financiamiento",
+    "politica financiera"
   ],
 
   "Agrario": [
     "ley agraria",
-    "derecho agrario",
-    "tribunales agrarios",
-    "registro agrario nacional",
-    "propiedad ejidal",
+    "ejido",
     "ejidatarios",
-    "tierras ejidales"
+    "comunidad agraria",
+    "propiedad ejidal",
+    "registro agrario nacional"
   ],
 
   "Ambiental": [
-    "ley general del equilibrio ecologico",
-    "derecho ambiental",
+    "medio ambiente",
     "impacto ambiental",
+    "equilibrio ecologico",
+    "recursos naturales",
     "proteccion ambiental",
-    "responsabilidad ambiental",
-    "contaminacion",
     "biodiversidad",
-    "residuos peligrosos"
+    "contaminacion"
   ],
 
   "Electoral": [
-    "ley general de instituciones y procedimientos electorales",
-    "derecho electoral",
-    "tribunal electoral",
+    "materia electoral",
     "proceso electoral",
-    "elecciones",
-    "sufragio",
-    "partidos politicos"
+    "instituto nacional electoral",
+    "tribunal electoral",
+    "partidos politicos",
+    "derechos politico electorales"
   ],
 
   "Internacional Público": [
     "derecho internacional publico",
-    "responsabilidad internacional del estado",
+    "tratado internacional",
+    "relaciones exteriores",
+    "convencion internacional",
     "organizacion de las naciones unidas",
-    "relaciones diplomaticas",
-    "derecho de los tratados",
-    "organismos internacionales"
+    "cooperacion internacional"
   ],
 
   "Internacional Privado": [
     "derecho internacional privado",
     "conflicto de leyes",
-    "conflicto de jurisdicciones",
-    "competencia judicial internacional",
-    "contratos internacionales"
-  ], 
+    "jurisdiccion internacional",
+    "reconocimiento de sentencias extranjeras"
+  ],
 
   "Derechos Humanos": [
+    "derechos humanos",
     "comision nacional de los derechos humanos",
-    "sistema interamericano de derechos humanos",
-    "convencion americana sobre derechos humanos",
-    "proteccion de derechos humanos",
     "no discriminacion",
-    "igualdad sustantiva"
+    "igualdad sustantiva",
+    "perspectiva de genero",
+    "grupos vulnerables"
   ],
 
   "Migratorio": [
-    "ley de migracion",
-    "derecho migratorio",
-    "instituto nacional de migracion",
-    "politica migratoria",
+    "migracion",
     "migrantes",
+    "instituto nacional de migracion",
+    "condicion de estancia",
     "refugiados",
-    "deportacion"
+    "asilo"
   ],
 
   "Corporativo": [
-    "derecho corporativo",
     "gobierno corporativo",
-    "responsabilidad corporativa",
-    "cumplimiento corporativo",
-    "fusiones y adquisiciones",
-    "consejo de administracion"
+    "sociedades",
+    "fusion de sociedades",
+    "escision",
+    "administracion societaria"
   ],
 
   "Seguridad Social": [
-    "ley del seguro social",
-    "ley del instituto de seguridad y servicios sociales",
-    "derecho de la seguridad social",
+    "seguridad social",
     "instituto mexicano del seguro social",
-    "cuotas obrero patronales",
-    "jubilacion"
+    "imss",
+    "instituto de seguridad y servicios sociales",
+    "issste",
+    "pensiones",
+    "jubilaciones"
   ],
 
   "Amparo": [
-    "ley de amparo",
     "juicio de amparo",
+    "ley de amparo",
     "amparo directo",
     "amparo indirecto",
-    "suspension del acto reclamado",
-    "quejoso",
-    "autoridad responsable"
+    "suspension del acto reclamado"
   ],
 
   "Procesal Civil": [
-    "codigo nacional de procedimientos civiles y familiares",
-    "derecho procesal civil",
     "procedimiento civil",
+    "proceso civil",
     "juicio ordinario civil",
-    "emplazamiento",
-    "audiencia civil"
+    "juicio ejecutivo civil",
+    "codigo nacional de procedimientos civiles"
   ],
 
   "Procesal Administrativo": [
     "juicio contencioso administrativo",
-    "procedimiento contencioso administrativo",
-    "derecho procesal administrativo",
     "tribunal federal de justicia administrativa",
-    "recurso administrativo",
+    "proceso administrativo",
     "nulidad administrativa"
   ],
 
   "Económico": [
-    "derecho economico",
-    "orden economico",
-    "regulacion economica",
     "politica economica",
     "desarrollo economico",
-    "mercado interno"
+    "actividad economica",
+    "regulacion economica"
   ],
 
   "Bancario y Bursátil": [
-    "ley del mercado de valores",
-    "derecho bancario",
-    "derecho bursatil",
-    "materia bancaria",
-    "materia bursatil",
-    "comision nacional bancaria y de valores",
-    "union de credito",
-    "operaciones bancarias"
+    "instituciones de credito",
+    "banca",
+    "bancario",
+    "bolsa de valores",
+    "mercado de valores",
+    "comision nacional bancaria"
   ],
 
   "Propiedad Intelectual": [
-    "ley federal de proteccion a la propiedad industrial",
-    "ley federal del derecho de autor",
-    "derecho de propiedad intelectual",
+    "propiedad intelectual",
+    "derechos de autor",
     "instituto mexicano de la propiedad industrial",
-    "registro de marcas",
     "patentes",
-    "propiedad industrial"
+    "marcas registradas"
   ],
 
   "Informático y Digital": [
-    "delitos informaticos",
-    "derecho informatico",
-    "derecho digital",
     "proteccion de datos personales",
-    "firma electronica avanzada",
-    "comercio electronico",
+    "datos personales",
+    "firma electronica",
+    "medios electronicos",
+    "plataforma digital",
+    "inteligencia artificial",
     "ciberseguridad",
-    "inteligencia artificial"
+    "tecnologias de la informacion"
   ],
 
   "Notarial y Registral": [
-    "derecho notarial",
-    "derecho registral",
-    "ley del notariado",
-    "registro publico de la propiedad",
-    "registro publico de comercio",
     "notario publico",
-    "escritura publica"
+    "notariado",
+    "registro publico de la propiedad",
+    "registro civil",
+    "funcion notarial"
   ],
 
   "Aduanero": [
     "ley aduanera",
-    "derecho aduanero",
-    "materia aduanera",
-    "agencia nacional de aduanas de mexico",
-    "despacho aduanero",
-    "importacion",
-    "exportacion",
-    "pedimento"
+    "aduanas",
+    "agente aduanal",
+    "comercio exterior",
+    "despacho aduanero"
   ],
 
   "Municipal": [
-    "derecho municipal",
-    "gobierno municipal",
-    "administracion publica municipal",
-    "reglamento municipal",
+    "municipio",
     "ayuntamiento",
+    "gobierno municipal",
     "cabildo",
-    "presidencia municipal"
+    "reglamento municipal"
   ],
 
   "Competencia Económica": [
-    "ley federal de competencia economica",
-    "derecho de la competencia economica",
+    "competencia economica",
     "practicas monopolicas",
+    "monopolio",
     "concentraciones economicas",
-    "comision federal de competencia economica",
-    "mercado relevante",
-    "libre concurrencia"
+    "comision nacional antimonopolio"
   ],
 
   "Derecho Comparado": [
     "derecho comparado",
-    "estudio comparado de legislaciones",
-    "comparacion de sistemas juridicos",
     "legislacion comparada",
-    "common law",
-    "civil law"
+    "sistema juridico extranjero"
   ],
 
   "Derecho Médico y Sanitario": [
-    "ley general de salud",
-    "derecho sanitario",
-    "derecho medico",
+    "secretaria de salud",
+    "salud publica",
+    "insumos para la salud",
     "regulacion sanitaria",
-    "responsabilidad medica",
     "expediente clinico",
-    "consentimiento informado"
+    "servicios de salud"
   ],
 
   "Derecho Educativo": [
     "ley general de educacion",
-    "derecho educativo",
-    "sistema educativo nacional",
-    "legislacion educativa",
+    "educacion publica",
     "instituciones educativas",
-    "personal docente"
+    "sistema educativo nacional",
+    "autoridad educativa"
   ],
 
   "Derecho Deportivo": [
-    "ley general de cultura fisica y deporte",
-    "derecho deportivo",
-    "legislacion deportiva",
-    "federaciones deportivas",
-    "deportistas"
+    "deporte",
+    "cultura fisica",
+    "actividad deportiva",
+    "comision nacional de cultura fisica"
   ],
 
   "Derecho Turístico": [
-    "ley general de turismo",
-    "derecho turistico",
-    "materia turistica",
-    "legislacion turistica",
-    "servicios turisticos"
+    "turismo",
+    "actividad turistica",
+    "prestadores de servicios turisticos",
+    "secretaria de turismo"
   ],
 
   "Derecho de la Cultura": [
-    "ley general de cultura y derechos culturales",
-    "derecho cultural",
-    "derecho de la cultura",
     "patrimonio cultural",
-    "monumentos historicos",
-    "bienes culturales"
+    "cultura",
+    "bienes culturales",
+    "instituto nacional de antropologia"
   ],
 
   "Derecho de Consumo": [
-    "ley federal de proteccion al consumidor",
-    "derecho del consumidor",
-    "derecho de consumo",
     "proteccion al consumidor",
-    "procuraduria federal del consumidor",
+    "consumidores",
+    "profeco",
+    "relaciones de consumo",
     "publicidad engañosa"
   ],
 
   "Derecho Energético": [
-    "derecho energetico",
-    "ley del sector electrico",
-    "ley del sector hidrocarburos",
-    "industria electrica",
-    "industria de hidrocarburos",
-    "gas natural"
+    "sector energetico",
+    "energia electrica",
+    "hidrocarburos",
+    "petroleos mexicanos",
+    "pemex",
+    "comision federal de electricidad",
+    "cfe"
   ],
 
   "Derecho de Telecomunicaciones": [
-    "ley en materia de telecomunicaciones",
-    "derecho de las telecomunicaciones",
-    "regulacion de telecomunicaciones",
+    "telecomunicaciones",
     "radiodifusion",
     "espectro radioelectrico",
-    "redes publicas"
+    "servicios de telecomunicaciones",
+    "telefonia"
   ]
 
 };
 
 // ==================================================
-// CLASIFICACIÓN JURÍDICA
+// CLASIFICACIÓN POR MATERIA
 // ==================================================
 
-function clasificarPublicacion(titulo, dependencia) {
-  const texto = normalizarTexto(
-    `${titulo} ${dependencia}`
-  );
-
+function clasificarPublicacion(titulo, dependencia = "") {
+  const texto = normalizarTexto(`${titulo} ${dependencia}`);
   const resultados = [];
 
-  // Expresiones jurídicas específicas:
-  // tienen mayor valor que las palabras generales.
-  const expresionesEspecificas = [
-    "ley federal",
-    "ley general",
-    "codigo nacional",
-    "codigo penal",
-    "codigo civil",
-    "codigo fiscal",
-    "codigo de comercio",
-    "constitucion politica",
-    "ley organica",
-    "reglamento de la ley",
-    "ley de amparo",
-    "ley del seguro social",
-    "ley federal del trabajo",
-    "ley general de salud",
-    "ley de migracion",
-    "juicio de amparo",
-    "tribunal federal de justicia administrativa",
-    "comision nacional de los derechos humanos"
-  ];
-
   for (const [materia, palabras] of Object.entries(REGLAS_JURIDICAS)) {
-    let puntuacion = 0;
-    const motivos = [];
+    let puntos = 0;
 
     for (const palabra of palabras) {
-      const termino = normalizarTexto(palabra);
-
-      if (!termino || !texto.includes(termino)) {
-        continue;
+      if (texto.includes(normalizarTexto(palabra))) {
+        puntos += palabra.includes(" ") ? 3 : 2;
       }
-
-      const esEspecifica =
-        expresionesEspecificas.some(expresion =>
-          termino.includes(expresion) ||
-          expresion.includes(termino)
-        );
-
-      puntuacion += esEspecifica ? 4 : 1;
-      motivos.push(palabra);
     }
 
-    if (puntuacion > 0) {
-      resultados.push({
-        materia,
-        puntuacion,
-        motivos
-      });
+    if (puntos > 0) {
+      resultados.push({ materia, puntos });
     }
   }
 
-  resultados.sort((a, b) =>
-    b.puntuacion - a.puntuacion
-  );
+  resultados.sort((a, b) => b.puntos - a.puntos);
 
-  const principal = resultados[0];
-
-  if (!principal) {
+  if (!resultados.length) {
     return {
-      materiaPrincipal: null,
-      materias: [],
+      principal: "No identificada",
       secundarias: [],
-      detalles: [],
-      confianza: "Baja"
+      confianza: "No determinada",
+      puntos: 0
     };
   }
 
-  const segundoLugar = resultados[1];
-
-  const diferencia =
-    segundoLugar
-      ? principal.puntuacion - segundoLugar.puntuacion
-      : principal.puntuacion;
+  const principal = resultados[0];
+  const diferencia = resultados[1]
+    ? principal.puntos - resultados[1].puntos
+    : principal.puntos;
 
   let confianza = "Baja";
 
-  if (
-    principal.puntuacion >= 4 &&
-    diferencia >= 2
-  ) {
+  if (principal.puntos >= 6 && diferencia >= 3) {
     confianza = "Alta";
-  } else if (
-    principal.puntuacion >= 2 &&
-    diferencia >= 1
-  ) {
+  } else if (principal.puntos >= 3) {
     confianza = "Media";
   }
 
-  const secundarias = resultados
-    .slice(1)
-    .filter(resultado =>
-      resultado.puntuacion >= 2 &&
-      resultado.puntuacion >= principal.puntuacion * 0.5
-    );
-
   return {
-    materiaPrincipal: principal.materia,
-    materias: [
-      principal.materia,
-      ...secundarias.map(resultado => resultado.materia)
-    ],
-    secundarias: secundarias.map(resultado => resultado.materia),
-    detalles: resultados,
-    confianza
-  };
-} {
-  const texto = normalizarTexto(
-    `${titulo} ${dependencia}`
-  );
-
-  const resultados = [];
-
-  for (const [materia, palabras] of Object.entries(REGLAS_JURIDICAS)) {
-    const coincidencias = palabras.filter(palabra =>
-      texto.includes(normalizarTexto(palabra))
-    );
-
-    if (coincidencias.length) {
-      resultados.push({
-        materia,
-        puntuacion: coincidencias.length,
-        motivos: coincidencias
-      });
-    }
-  }
-
-  resultados.sort((a, b) =>
-    b.puntuacion - a.puntuacion
-  );
-
-  const principal = resultados[0];
-
-  if (!principal) {
-    return {
-      materiaPrincipal: null,
-      materias: [],
-      secundarias: [],
-      detalles: [],
-      confianza: "Baja"
-    };
-  }
-
-  const secundarias = resultados
-    .slice(1)
-    .filter(resultado =>
-      resultado.puntuacion >= 2 &&
-      resultado.puntuacion >= principal.puntuacion * 0.5
-    );
-
-  const confianza =
-    principal.puntuacion >= 3 ? "Alta" :
-    principal.puntuacion >= 2 ? "Media" : "Baja";
-
-  return {
-    materiaPrincipal: principal.materia,
-    materias: [
-      principal.materia,
-      ...secundarias.map(r => r.materia)
-    ],
-    secundarias: secundarias.map(r => r.materia),
-    detalles: resultados,
-    confianza
+    principal: principal.materia,
+    secundarias: resultados
+      .slice(1, 4)
+      .map(resultado => resultado.materia),
+    confianza,
+    puntos: principal.puntos
   };
 }
 
 // ==================================================
-// TIPO DOCUMENTAL
+// IDENTIFICACIÓN DEL TIPO DOCUMENTAL
 // ==================================================
 
-function detectarTipoDocumental(titulo) {
+function detectarTipoDocumental(titulo = "") {
   const texto = normalizarTexto(titulo);
 
-  const tipos = [
-    ["Tratado internacional", ["tratado"]],
-    ["Convención", ["convencion"]],
-    ["Protocolo internacional", ["protocolo"]],
-    ["Jurisprudencia", ["jurisprudencia"]],
-    ["Tesis aislada", ["tesis aislada"]],
-    ["Sentencia", ["sentencia"]],
-    ["Ejecutoria", ["ejecutoria"]],
-    ["Constitución", ["constitucion politica"]],
-    ["Código", ["codigo penal", "codigo civil", "codigo fiscal", "codigo de comercio", "codigo nacional"]],
-    ["Decreto", ["decreto"]],
-    ["Reforma o adición", ["reforma", "adicion"]],
-    ["Iniciativa de ley", ["iniciativa con proyecto de decreto"]],
-    ["Reglamento", ["reglamento"]],
-    ["Ley", ["ley general", "ley federal", "ley organica", "ley de"]],
-    ["Convenio", ["convenio"]],
-    ["Oficio administrativo", ["oficio mediante el cual", "oficio por el que"]],
-    ["Resolución administrativa", ["resolucion administrativa", "resolucion por la que"]],
-    ["Acuerdo administrativo", ["acuerdo por el que", "acuerdo mediante el cual"]],
-    ["Circular", ["circular"]],
-    ["Lineamiento", ["lineamientos"]],
-    ["Norma oficial mexicana", ["norma oficial mexicana"]],
-    ["Reglas de operación", ["reglas de operacion"]],
-    ["Aviso", ["aviso"]],
-    ["Convocatoria", ["convocatoria"]],
-    ["Declaratoria", ["declaratoria"]]
+  const reglas = [
+    { tipo: "Constitución", palabras: ["constitucion politica"] },
+    { tipo: "Decreto", palabras: ["decreto"] },
+    { tipo: "Ley", palabras: ["ley general", "ley federal", "ley organica", "ley"] },
+    { tipo: "Código", palabras: ["codigo"] },
+    { tipo: "Reglamento", palabras: ["reglamento"] },
+    { tipo: "Acuerdo administrativo", palabras: ["acuerdo"] },
+    { tipo: "Convenio", palabras: ["convenio"] },
+    { tipo: "Lineamiento", palabras: ["lineamientos", "lineamiento"] },
+    { tipo: "Norma oficial mexicana", palabras: ["norma oficial mexicana", "nom "] },
+    { tipo: "Reglas de operación", palabras: ["reglas de operacion"] },
+    { tipo: "Circular", palabras: ["circular"] },
+    { tipo: "Convocatoria", palabras: ["convocatoria"] },
+    { tipo: "Aviso", palabras: ["aviso"] },
+    { tipo: "Declaratoria", palabras: ["declaratoria"] },
+    { tipo: "Resolución administrativa", palabras: ["resolucion"] }
   ];
 
-  for (const [tipo, palabras] of tipos) {
-    if (palabras.some(palabra =>
-      texto.includes(normalizarTexto(palabra))
-    )) {
-      return tipo;
+  for (const regla of reglas) {
+    if (regla.palabras.some(palabra => texto.includes(palabra))) {
+      return {
+        tipo: regla.tipo,
+        confianza: "Media"
+      };
     }
   }
 
-  return "No determinado";
+  return {
+    tipo: "Publicación oficial",
+    confianza: "No determinada"
+  };
 }
+
+// ==================================================
+// IDENTIFICACIÓN DEL GRUPO DOCUMENTAL
+// ==================================================
 
 function detectarGrupo(tipo) {
-  const grupos = {
-    "Constitución": "Legislativo",
-    "Ley": "Legislativo",
-    "Código": "Legislativo",
-    "Decreto": "Legislativo",
-    "Reforma o adición": "Legislativo",
-    "Iniciativa de ley": "Legislativo",
-    "Reglamento": "Normativo",
-    "Jurisprudencia": "Judicial",
-    "Tesis aislada": "Judicial",
-    "Sentencia": "Judicial",
-    "Ejecutoria": "Judicial",
-    "Tratado internacional": "Internacional",
-    "Convención": "Internacional",
-    "Protocolo internacional": "Internacional"
-  };
+  const catalogo = window.CATALOGO_JURIDICO;
 
-  return grupos[tipo] || "Administrativo";
+  if (!catalogo || !catalogo.tiposDocumentales) {
+    return "Sin clasificar";
+  }
+
+  for (const [grupo, tipos] of Object.entries(catalogo.tiposDocumentales)) {
+    if (tipos.includes(tipo)) {
+      return grupo.charAt(0).toUpperCase() + grupo.slice(1);
+    }
+  }
+
+  return "Sin clasificar";
 }
 
 // ==================================================
-// CREAR TARJETA
+// CONSULTA DEL DETALLE DE CADA PUBLICACIÓN
 // ==================================================
 
-function crearTarjeta(nota) {
-  const tarjeta = document.createElement("article");
-  tarjeta.className = "card";
+async function consultarDetalle(codigo) {
+  if (!codigo) return null;
 
+  try {
+    const respuesta = await fetch(
+      `${DOF_API}/notas/nota/${encodeURIComponent(codigo)}`
+    );
+
+    if (!respuesta.ok) {
+      throw new Error(`Error HTTP ${respuesta.status}`);
+    }
+
+    const datos = await respuesta.json();
+
+    return datos;
+  } catch (error) {
+    console.warn("No se pudo consultar el detalle:", codigo, error);
+    return null;
+  }
+}
+
+// ==================================================
+// EXTRAER CONTENIDO DE LA PUBLICACIÓN
+// ==================================================
+
+function obtenerContenidoDetalle(datos) {
+  if (!datos) return "";
+
+  const posibles = [
+    datos.contenido,
+    datos.texto,
+    datos.nota,
+    datos.descripcion,
+    datos.html,
+    datos.data?.contenido,
+    datos.data?.texto,
+    datos.datos?.contenido,
+    datos.datos?.texto
+  ];
+
+  const contenido = posibles.find(
+    valor => typeof valor === "string" && valor.trim()
+  );
+
+  return contenido || "";
+}
+
+// ==================================================
+// CREAR TARJETA DE PUBLICACIÓN
+// ==================================================
+
+function crearTarjeta(nota, contenido = "") {
   const titulo = obtenerTitulo(nota);
   const dependencia = obtenerDependencia(nota);
   const codigo = obtenerCodigo(nota);
@@ -769,110 +669,110 @@ function crearTarjeta(nota) {
 
   const clasificacion = clasificarPublicacion(
     titulo,
-    dependencia
+    `${dependencia} ${contenido}`
   );
 
   const tipo = detectarTipoDocumental(titulo);
-  const grupo = detectarGrupo(tipo);
+  const grupo = detectarGrupo(tipo.tipo);
 
-  tarjeta.dataset.materias =
-    clasificacion.materias.join("|");
+  const tarjeta = document.createElement("article");
+  tarjeta.className = "news-card";
 
-  tarjeta.dataset.materiaPrincipal =
-    clasificacion.materiaPrincipal || "";
+  const fechaVisible = fecha
+    ? escaparHTML(fecha)
+    : "Fecha no disponible";
 
-  tarjeta.dataset.clasificacion =
-    !clasificacion.materiaPrincipal
-      ? "otras"
-      : clasificacion.confianza === "Baja"
-        ? "pendientes"
-        : "identificada";
+  const codigoVisible = codigo
+    ? escaparHTML(codigo)
+    : "No disponible";
 
-  const h3 = document.createElement("h3");
-  h3.textContent = titulo;
+  const materiasSecundarias = clasificacion.secundarias.length
+    ? clasificacion.secundarias.join(", ")
+    : "Ninguna identificada";
 
-  const pDependencia = document.createElement("p");
-  pDependencia.textContent = dependencia;
+  const enlace = codigo
+    ? `https://www.dof.gob.mx/nota_detalle.php?codigo=${encodeURIComponent(codigo)}`
+    : "https://www.dof.gob.mx/";
 
-  const pFecha = document.createElement("p");
-  pFecha.textContent =
-    `Fecha: ${fecha || "No disponible"}`;
+  tarjeta.innerHTML = `
+    <div class="news-card-content">
 
-  const pTipo = document.createElement("p");
-  pTipo.textContent =
-    `Tipo documental: ${tipo}. Grupo: ${grupo}.`;
+      <div class="news-card-meta">
+        <span>${escaparHTML(grupo)}</span>
+        <span>${fechaVisible}</span>
+      </div>
 
-  const pMateria = document.createElement("p");
+      <h3>${escaparHTML(titulo)}</h3>
 
-  pMateria.textContent = clasificacion.materiaPrincipal
-    ? `Materia principal: Derecho ${clasificacion.materiaPrincipal}. Confianza: ${clasificacion.confianza}.`
-    : "Materia principal: No identificada.";
+      <p>
+        <strong>Dependencia:</strong>
+        ${escaparHTML(dependencia)}
+      </p>
 
-  const pSecundarias = document.createElement("p");
+      <p>
+        <strong>Materia principal:</strong>
+        ${escaparHTML(clasificacion.principal)}
+      </p>
 
-  pSecundarias.textContent =
-    clasificacion.secundarias.length
-      ? `Materias secundarias: ${clasificacion.secundarias.join(", ")}.`
-      : "Materias secundarias: Ninguna identificada.";
+      <p>
+        <strong>Materias relacionadas:</strong>
+        ${escaparHTML(materiasSecundarias)}
+      </p>
 
-  tarjeta.append(
-    h3,
-    pDependencia,
-    pFecha,
-    pTipo,
-    pMateria,
-    pSecundarias
-  );
+      <p>
+        <strong>Tipo documental:</strong>
+        ${escaparHTML(tipo.tipo)}
+      </p>
 
-  if (clasificacion.detalles.length) {
-    const motivos = document.createElement("p");
+      <p>
+        <strong>Confianza de clasificación:</strong>
+        ${escaparHTML(clasificacion.confianza)}
+      </p>
 
-    motivos.textContent =
-      "Motivos: " +
-      clasificacion.detalles
-        .slice(0, 3)
-        .flatMap(d => d.motivos.slice(0, 2))
-        .join(", ");
+      <p>
+        <strong>Código DOF:</strong>
+        ${codigoVisible}
+      </p>
 
-    tarjeta.appendChild(motivos);
-  }
+      <div class="news-card-footer">
+        <a
+          href="${escaparHTML(enlace)}"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Consultar publicación oficial
+        </a>
+      </div>
 
-  if (codigo) {
-    const enlace = document.createElement("a");
+    </div>
+  `;
 
-    enlace.href =
-      `https://www.dof.gob.mx/nota_detalle.php?codigo=${encodeURIComponent(codigo)}&fecha=${encodeURIComponent(fecha)}`;
-
-    enlace.target = "_blank";
-    enlace.rel = "noopener noreferrer";
-    enlace.textContent = "Consultar publicación oficial";
-
-    tarjeta.appendChild(enlace);
-  }
-
-  return tarjeta;
+  return {
+    elemento: tarjeta,
+    nota,
+    titulo,
+    dependencia,
+    codigo,
+    fecha,
+    clasificacion,
+    tipo: tipo.tipo,
+    grupo
+  };
 }
 
 // ==================================================
-// ESTADÍSTICAS
+// ACTUALIZAR ESTADÍSTICAS
 // ==================================================
 
 function actualizarEstadisticas() {
   const total = publicacionesDOF.length;
 
-  const identificadas = publicacionesDOF.filter(publicacion =>
-    publicacion.clasificacion.materiaPrincipal &&
-    publicacion.clasificacion.confianza !== "Baja"
+  const identificadas = publicacionesDOF.filter(
+    publicacion =>
+      publicacion.clasificacion.principal !== "No identificada"
   ).length;
 
-  const pendientes = publicacionesDOF.filter(publicacion =>
-    publicacion.clasificacion.materiaPrincipal &&
-    publicacion.clasificacion.confianza === "Baja"
-  ).length;
-
-  const otras = publicacionesDOF.filter(publicacion =>
-    !publicacion.clasificacion.materiaPrincipal
-  ).length;
+  const otras = total - identificadas;
 
   if (elementosDOF.total) {
     elementosDOF.total.textContent = total;
@@ -887,284 +787,300 @@ function actualizarEstadisticas() {
   }
 
   if (elementosDOF.pendientes) {
-    elementosDOF.pendientes.textContent = pendientes;
+    elementosDOF.pendientes.textContent = otras;
   }
 }
 
 // ==================================================
-// PREPARAR FILTROS
+// PREPARAR FILTROS Y MATERIAS
 // ==================================================
 
 function prepararFiltros() {
-  const select = elementosDOF.categoria;
+  const catalogo = window.CATALOGO_JURIDICO;
 
-  const catalogo =
-    window.CATALOGO_JURIDICO ||
-    (typeof CATALOGO_JURIDICO !== "undefined"
-      ? CATALOGO_JURIDICO
-      : null);
+  if (!catalogo) {
+    console.error("No se encontró el catálogo jurídico.");
+    return;
+  }
 
-  if (!select || !catalogo) return;
+  if (elementosDOF.categoria) {
+    elementosDOF.categoria.innerHTML =
+      '<option value="">Todas las materias</option>';
 
-  const materias = catalogo.materias;
-
-  materias.forEach(materia => {
-    const existe = Array.from(select.options).some(
-      opcion => opcion.value === materia
-    );
-
-    if (!existe) {
+    catalogo.materias.forEach(materia => {
       const opcion = document.createElement("option");
-
       opcion.value = materia;
-      opcion.textContent = "Derecho " + materia;
+      opcion.textContent = materia;
 
-      select.appendChild(opcion);
-    }
-  });
+      elementosDOF.categoria.appendChild(opcion);
+    });
+  }
 
   if (elementosDOF.materias) {
-    elementosDOF.materias.textContent =
-      materias.map(materia =>
-        "Derecho " + materia
-      ).join(" · ");
+    elementosDOF.materias.innerHTML = "";
+
+    catalogo.materias.forEach(materia => {
+      const elemento = document.createElement("span");
+
+      elemento.className = "materia-item";
+      elemento.textContent = materia;
+
+      elementosDOF.materias.appendChild(elemento);
+    });
   }
 
   if (elementosDOF.diagnostico) {
     elementosDOF.diagnostico.textContent =
-      `JURIA tiene disponible un catálogo de ${materias.length} materias jurídicas. La clasificación actual utiliza reglas de identificación textual.`;
+      "Catálogo jurídico disponible. La identificación de materias se realiza mediante reglas de clasificación textual. El análisis con inteligencia artificial se incorporará cuando JURIA esté conectada.";
   }
 }
 
 // ==================================================
-// FILTROS DE PUBLICACIONES
+// FILTRAR PUBLICACIONES
 // ==================================================
 
 function filtrarPublicaciones() {
-  const termino = normalizarTexto(
+  const busqueda = normalizarTexto(
     elementosDOF.busqueda?.value || ""
   );
 
-  const seleccion =
-    elementosDOF.categoria?.value || "todos";
+  const categoria = elementosDOF.categoria?.value || "";
 
-  if (!elementosDOF.resultados) return;
+  const filtradas = publicacionesDOF.filter(publicacion => {
+    const texto = normalizarTexto(
+      `${publicacion.titulo} ${publicacion.dependencia} ${publicacion.codigo} ${publicacion.tipo} ${publicacion.clasificacion.principal} ${publicacion.clasificacion.secundarias.join(" ")}`
+    );
 
-  const tarjetas =
-    elementosDOF.resultados.querySelectorAll(".card");
+    const coincideBusqueda =
+      !busqueda || texto.includes(busqueda);
 
-  tarjetas.forEach(tarjeta => {
-    const texto = normalizarTexto(tarjeta.textContent);
+    const coincideCategoria =
+      !categoria ||
+      publicacion.clasificacion.principal === categoria ||
+      publicacion.clasificacion.secundarias.includes(categoria);
 
-    const materias = (
-      tarjeta.dataset.materias || ""
-    ).split("|");
-
-    const coincideTexto = texto.includes(termino);
-
-    let coincideMateria = true;
-
-    if (seleccion === "otras") {
-      coincideMateria =
-        tarjeta.dataset.clasificacion === "otras";
-
-    } else if (seleccion === "pendientes") {
-      coincideMateria =
-        tarjeta.dataset.clasificacion === "pendientes";
-
-    } else if (seleccion !== "todos") {
-      coincideMateria =
-        materias.includes(seleccion);
-    }
-
-    tarjeta.style.display =
-      coincideTexto && coincideMateria ? "" : "none";
+    return coincideBusqueda && coincideCategoria;
   });
-}
 
-// ==================================================
-// CONSULTA DEL DIARIO OFICIAL
-// ==================================================
-
-async function consultarDOF() {
-  if (consultaEnCurso) return;
-
-  if (!elementosDOF.estado || !elementosDOF.resultados) {
-    console.error("No se encontraron los elementos HTML del DOF.");
-    return;
-  }
-
-  consultaEnCurso = true;
-
-  const boton = elementosDOF.actualizar;
-
-  if (boton) {
-    boton.disabled = true;
-  }
-
-  elementosDOF.estado.textContent =
-    "Conectando con el Diario Oficial de la Federación...";
-
-  elementosDOF.resultados.replaceChildren();
-
-  publicacionesDOF = [];
-
-  try {
-    const mapaPublicaciones = new Map();
-
-    for (let dia = 0; dia < DIAS_CONSULTA; dia++) {
-      const fecha = obtenerFecha(dia);
-
-      elementosDOF.estado.textContent =
-        `Consultando publicaciones del ${fecha}...`;
-
-      const respuesta = await fetch(
-        `${DOF_API}/notas/${fecha}`,
-        {
-          method: "GET",
-          cache: "no-store"
-        }
-      );
-
-      if (!respuesta.ok) {
-        throw new Error(
-          `El SIDOF respondió con HTTP ${respuesta.status} al consultar ${fecha}.`
-        );
-      }
-
-      const datos = await respuesta.json();
-
-      if (
-        datos.messageCode &&
-        Number(datos.messageCode) !== 200
-      ) {
-        throw new Error(
-          datos.response || "El SIDOF rechazó la consulta."
-        );
-      }
-
-      const notas = obtenerNotasRespuesta(datos);
-
-      for (const nota of notas) {
-        const codigo = obtenerCodigo(nota);
-
-        if (!codigo) continue;
-
-        mapaPublicaciones.set(String(codigo), nota);
-      }
-
-      await esperar(ESPERA_ENTRE_NOTAS);
-    }
-
-    publicacionesDOF = Array.from(
-      mapaPublicaciones.values()
-    ).map(nota => ({
-      nota,
-      clasificacion: clasificarPublicacion(
-        obtenerTitulo(nota),
-        obtenerDependencia(nota)
-      )
-    }));
-
-    publicacionesDOF.sort((a, b) => {
-      const codigoA = Number(obtenerCodigo(a.nota));
-      const codigoB = Number(obtenerCodigo(b.nota));
-
-      return codigoB - codigoA;
-    });
-
-    mostrarPublicaciones();
-    actualizarEstadisticas();
-
-    elementosDOF.estado.textContent =
-      `${publicacionesDOF.length} publicaciones encontradas en los últimos ${DIAS_CONSULTA} días. Consulta finalizada.`;
-
-  } catch (error) {
-    console.error("Error al consultar el DOF:", error);
-
-    elementosDOF.estado.textContent =
-      "No fue posible consultar el Diario Oficial: " +
-      error.message;
-
-    elementosDOF.resultados.innerHTML = `
-      <article class="card">
-        <h3>Error de conexión</h3>
-        <p>${escaparHTML(error.message)}</p>
-        <p>Comprueba tu conexión y vuelve a intentarlo.</p>
-        <a href="https://sidof.segob.gob.mx/datos_abiertos"
-           target="_blank"
-           rel="noopener noreferrer">
-          Consultar servicio oficial SIDOF
-        </a>
-      </article>
-    `;
-
-  } finally {
-    consultaEnCurso = false;
-
-    if (boton) {
-      boton.disabled = false;
-    }
-  }
+  mostrarPublicaciones(filtradas);
 }
 
 // ==================================================
 // MOSTRAR PUBLICACIONES
 // ==================================================
 
-function mostrarPublicaciones() {
+function mostrarPublicaciones(lista = publicacionesDOF) {
   if (!elementosDOF.resultados) return;
 
-  elementosDOF.resultados.replaceChildren();
+  elementosDOF.resultados.innerHTML = "";
 
-  if (!publicacionesDOF.length) {
-    elementosDOF.resultados.textContent =
-      "No se encontraron publicaciones en el periodo consultado.";
-
+  if (!lista.length) {
+    elementosDOF.resultados.innerHTML = `
+      <div class="empty-state">
+        <p>No se encontraron publicaciones con esos criterios.</p>
+      </div>
+    `;
     return;
   }
 
-  const fragmento = document.createDocumentFragment();
-
-  publicacionesDOF.forEach(publicacion => {
-    fragmento.appendChild(
-      crearTarjeta(publicacion.nota)
+  lista.forEach(publicacion => {
+    elementosDOF.resultados.appendChild(
+      publicacion.elemento
     );
   });
-
-  elementosDOF.resultados.appendChild(fragmento);
-
-  filtrarPublicaciones();
 }
 
 // ==================================================
-// INICIALIZACIÓN
+// CONSULTAR EL DIARIO OFICIAL
+// ==================================================
+
+async function consultarDOF() {
+  if (consultaEnCurso) return;
+
+  consultaEnCurso = true;
+
+  if (elementosDOF.estado) {
+    elementosDOF.estado.textContent =
+      "Consultando el Diario Oficial de la Federación...";
+  }
+
+  if (elementosDOF.botonActualizar) {
+    elementosDOF.botonActualizar.disabled = true;
+  }
+
+  const publicaciones = [];
+  const codigosRegistrados = new Set();
+
+  let diasConsultados = 0;
+  let errores = 0;
+
+  try {
+    for (let i = 0; i < DIAS_CONSULTA; i++) {
+      const fecha = new Date();
+
+      fecha.setDate(fecha.getDate() - i);
+
+      const fechaConsulta = obtenerFecha(fecha);
+
+      try {
+        const respuesta = await fetch(
+          `${DOF_API}/notas/${fechaConsulta}`,
+          {
+            method: "GET",
+            headers: {
+              "Accept": "application/json"
+            }
+          }
+        );
+
+        if (!respuesta.ok) {
+          throw new Error(`Error HTTP ${respuesta.status}`);
+        }
+
+        const datos = await respuesta.json();
+
+        const notas = obtenerNotasRespuesta(datos);
+
+        diasConsultados++;
+
+        for (const nota of notas) {
+          const codigo = obtenerCodigo(nota);
+
+          const identificador = codigo ||
+            `${obtenerTitulo(nota)}-${obtenerFechaNota(nota)}`;
+
+          if (codigosRegistrados.has(identificador)) {
+            continue;
+          }
+
+          codigosRegistrados.add(identificador);
+
+          publicaciones.push({
+            nota,
+            titulo: obtenerTitulo(nota),
+            dependencia: obtenerDependencia(nota),
+            codigo,
+            fecha: obtenerFechaNota(nota)
+          });
+        }
+
+      } catch (error) {
+        errores++;
+
+        console.warn(
+          `Error al consultar el DOF del ${fechaConsulta}:`,
+          error
+        );
+      }
+
+      await esperar(ESPERA_ENTRE_NOTAS);
+    }
+
+    // Consultar el detalle de las publicaciones.
+    const procesadas = [];
+
+    for (const publicacion of publicaciones) {
+      let contenido = "";
+
+      if (publicacion.codigo) {
+        const detalle = await consultarDetalle(publicacion.codigo);
+
+        contenido = obtenerContenidoDetalle(detalle);
+      }
+
+      procesadas.push(
+        crearTarjeta(publicacion.nota, contenido)
+      );
+
+      await esperar(ESPERA_ENTRE_NOTAS);
+    }
+
+    publicacionesDOF = procesadas;
+
+    publicacionesDOF.sort((a, b) => {
+      const fechaA = new Date(a.fecha || 0).getTime();
+      const fechaB = new Date(b.fecha || 0).getTime();
+
+      return fechaB - fechaA;
+    });
+
+    actualizarEstadisticas();
+    filtrarPublicaciones();
+
+    if (elementosDOF.estado) {
+      elementosDOF.estado.textContent =
+        `Consulta terminada. Se encontraron ${publicacionesDOF.length} publicaciones en ${diasConsultados} días consultados.`;
+
+      if (errores > 0) {
+        elementosDOF.estado.textContent +=
+          ` Hubo ${errores} días que no pudieron consultarse.`;
+      }
+    }
+
+  } catch (error) {
+    console.error("Error general al consultar el DOF:", error);
+
+    if (elementosDOF.estado) {
+      elementosDOF.estado.textContent =
+        "No fue posible completar la consulta del Diario Oficial. Intenta actualizar nuevamente.";
+    }
+
+  } finally {
+    consultaEnCurso = false;
+
+    if (elementosDOF.botonActualizar) {
+      elementosDOF.botonActualizar.disabled = false;
+    }
+  }
+}
+
+// ==================================================
+// INICIAR LEGISLATIVO MX
 // ==================================================
 
 function iniciarLEGISLATIVOMX() {
   prepararFiltros();
 
-  elementosDOF.busqueda?.addEventListener(
-    "input",
-    filtrarPublicaciones
-  );
+  if (elementosDOF.botonBuscar) {
+    elementosDOF.botonBuscar.addEventListener(
+      "click",
+      filtrarPublicaciones
+    );
+  }
 
-  elementosDOF.buscar?.addEventListener(
-    "click",
-    filtrarPublicaciones
-  );
+  if (elementosDOF.botonActualizar) {
+    elementosDOF.botonActualizar.addEventListener(
+      "click",
+      consultarDOF
+    );
+  }
 
-  elementosDOF.categoria?.addEventListener(
-    "change",
-    filtrarPublicaciones
-  );
+  if (elementosDOF.busqueda) {
+    elementosDOF.busqueda.addEventListener(
+      "input",
+      filtrarPublicaciones
+    );
+  }
 
-  elementosDOF.actualizar?.addEventListener(
-    "click",
-    consultarDOF
-  );
+  if (elementosDOF.categoria) {
+    elementosDOF.categoria.addEventListener(
+      "change",
+      filtrarPublicaciones
+    );
+  }
 
   consultarDOF();
 }
 
-iniciarLEGISLATIVOMX();
+// ==================================================
+// ARRANQUE AUTOMÁTICO
+// ==================================================
+
+if (document.readyState === "loading") {
+  document.addEventListener(
+    "DOMContentLoaded",
+    iniciarLEGISLATIVOMX
+  );
+} else {
+  iniciarLEGISLATIVOMX();
+}
