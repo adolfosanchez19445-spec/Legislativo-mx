@@ -3,374 +3,749 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>LEGISLATIVO MX | Monitor Legislativo</title>
-  <meta name="description" content="Monitor jurídico y legislativo de México.">
+
+  <meta name="description"
+    content="Plataforma de monitoreo legislativo y jurídico de México.">
+
   <meta name="theme-color" content="#102747">
+
   <link rel="manifest" href="./manifest.json">
 
   <style>
+    :root {
+      --navy: #102747;
+      --blue: #18385f;
+      --gold: #d6b45d;
+      --background: #f3f5f8;
+      --white: #ffffff;
+      --text: #263445;
+      --muted: #6b7787;
+      --border: #e1e6ed;
+      --success: #287a55;
+      --warning: #a87519;
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
 
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      background: #f3f5f8;
-      color: #243247;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--background);
+      color: var(--text);
       line-height: 1.6;
     }
 
-    header, footer {
-      background: #102747;
-      color: white;
-      text-align: center;
-      padding: 25px 15px;
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    .container {
+      width: min(1150px, 92%);
+      margin: auto;
+    }
+
+    /* ENCABEZADO */
+
+    header {
+      background: var(--navy);
+      color: var(--white);
+      padding: 18px 0;
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
     }
 
     .logo {
-      font-size: 29px;
+      font-size: 23px;
       font-weight: bold;
-      letter-spacing: 2px;
+      letter-spacing: 1px;
     }
 
     .logo span {
-      color: #d6b45d;
-    }
-
-    header p {
-      font-size: 12px;
-      letter-spacing: 2px;
+      color: var(--gold);
     }
 
     nav {
-      background: #18385f;
       display: flex;
-      justify-content: center;
+      gap: 20px;
       flex-wrap: wrap;
-      gap: 22px;
-      padding: 13px;
     }
 
     nav a {
-      color: white;
-      text-decoration: none;
+      color: var(--white);
       font-size: 14px;
     }
 
+    nav a:hover {
+      color: var(--gold);
+    }
+
+    /* PORTADA */
+
     .hero {
-      background: linear-gradient(135deg, #102747, #244b78);
-      color: white;
-      text-align: center;
-      padding: 48px 20px;
+      background: linear-gradient(135deg, var(--navy), var(--blue));
+      color: var(--white);
+      padding: 65px 0;
     }
 
     .hero h1 {
-      font-size: 32px;
+      font-size: clamp(28px, 5vw, 42px);
       margin-bottom: 12px;
     }
 
     .hero p {
-      max-width: 650px;
-      margin: auto;
-      color: #e3eaf2;
+      max-width: 680px;
+      color: #e0e7f0;
+      font-size: 16px;
     }
 
+    .hero-line {
+      width: 65px;
+      height: 4px;
+      background: var(--gold);
+      margin-top: 22px;
+      border-radius: 5px;
+    }
+
+    /* CONTENIDO */
+
     main {
-      max-width: 1150px;
-      margin: 35px auto;
-      padding: 0 18px;
+      padding: 35px 0 55px;
     }
 
     .section-title {
-      color: #102747;
-      font-size: 23px;
+      color: var(--navy);
+      font-size: 24px;
       margin-bottom: 18px;
-      border-left: 5px solid #d6b45d;
-      padding-left: 12px;
     }
 
-    .panel {
-      background: white;
-      border: 1px solid #e0e5ec;
-      border-radius: 9px;
-      padding: 18px;
-      margin-bottom: 20px;
+    .section-description {
+      color: var(--muted);
+      margin-bottom: 22px;
     }
+
+    /* DIAGNÓSTICO */
+
+    .diagnostico {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--gold);
+      border-radius: 9px;
+      padding: 16px;
+      margin-bottom: 25px;
+      font-size: 14px;
+    }
+
+    /* ESTADÍSTICAS */
 
     .stats {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 12px;
-      margin-bottom: 20px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin-bottom: 30px;
     }
 
-    .stat {
-      background: white;
-      padding: 18px;
-      border-radius: 8px;
-      border: 1px solid #e0e5ec;
+    .stat-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
     }
 
-    .stat strong {
-      display: block;
-      color: #102747;
-      font-size: 26px;
-    }
-
-    .stat span {
+    .stat-card p {
+      color: var(--muted);
       font-size: 13px;
-      color: #697789;
     }
 
-    .tools {
-      display: flex;
+    .stat-card strong {
+      display: block;
+      color: var(--navy);
+      font-size: 27px;
+      margin-top: 5px;
+    }
+
+    /* BUSCADOR */
+
+    .search-panel {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 22px;
+      margin-bottom: 25px;
+    }
+
+    .search-controls {
+      display: grid;
+      grid-template-columns: 2fr 1fr auto auto;
       gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 18px;
     }
 
-    input, select {
-      padding: 13px;
-      border: 1px solid #cbd3df;
-      border-radius: 6px;
-      background: white;
-      font-size: 14px;
-      min-width: 200px;
-    }
-
-    input {
-      flex: 1;
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font: inherit;
+      background: var(--white);
+      color: var(--text);
     }
 
     button {
-      padding: 12px 20px;
-      background: #102747;
-      color: white;
       border: none;
-      border-radius: 6px;
-      cursor: pointer;
+      border-radius: 7px;
+      padding: 12px 17px;
+      background: var(--navy);
+      color: var(--white);
       font-weight: bold;
+      cursor: pointer;
     }
 
     button:hover {
-      background: #244b78;
+      background: var(--blue);
     }
 
     button:disabled {
-      opacity: .5;
+      opacity: 0.6;
       cursor: not-allowed;
     }
 
-    #dof-status {
-      background: white;
-      border-left: 4px solid #d6b45d;
-      padding: 15px;
-      margin-bottom: 18px;
-      border-radius: 6px;
+    /* ESTADO DEL DOF */
+
+    .status {
+      color: var(--muted);
+      font-size: 14px;
+      margin: 15px 0;
     }
 
-    #juria-diagnostico {
-      background: #eef4fb;
-      border: 1px solid #b8cce3;
-      color: #102747;
-      padding: 16px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-    }
+    /* TARJETAS DE PUBLICACIONES */
 
     .news {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
-      gap: 17px;
+      grid-template-columns: 1fr;
+      gap: 15px;
     }
 
     .card {
-      background: white;
-      padding: 19px;
-      border-radius: 8px;
-      border: 1px solid #e0e5ec;
-      box-shadow: 0 3px 10px rgba(16,39,71,.05);
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
       overflow-wrap: anywhere;
     }
 
     .card h3 {
-      color: #102747;
-      font-size: 16px;
+      color: var(--navy);
+      font-size: 17px;
       margin-bottom: 12px;
     }
 
     .card p {
-      color: #526174;
-      font-size: 13px;
+      color: var(--muted);
+      font-size: 14px;
       margin-bottom: 8px;
     }
 
     .card a {
       display: inline-block;
-      color: #174d83;
-      font-weight: bold;
       margin-top: 10px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    /* JURIA */
+
+    .juria-section {
+      margin-top: 45px;
+    }
+
+    .juria-panel {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .juria-header {
+      background: var(--navy);
+      color: var(--white);
+      padding: 20px;
+    }
+
+    .juria-header h2 {
+      color: var(--white);
+      margin-bottom: 5px;
+    }
+
+    .juria-header p {
+      color: #dce5ef;
       font-size: 13px;
     }
 
-    .tag {
-      display: inline-block;
-      background: #eef4fb;
-      color: #174d83;
-      padding: 4px 8px;
-      border-radius: 5px;
-      font-size: 11px;
-      margin: 3px;
+    .juria-content {
+      padding: 20px;
     }
 
-    .notice {
-      background: #e9eef5;
-      padding: 15px;
-      margin-top: 25px;
-      border-radius: 6px;
+    .juria-status {
       font-size: 13px;
+      color: var(--warning);
+      margin-bottom: 15px;
     }
 
-    .materias, .fuentes {
-      background: white;
-      padding: 22px;
+    .juria-messages {
+      min-height: 130px;
+      max-height: 350px;
+      overflow-y: auto;
+      background: #f7f9fc;
+      border: 1px solid var(--border);
       border-radius: 8px;
-      margin-top: 30px;
+      padding: 15px;
+      margin-bottom: 15px;
     }
 
-    .materias p {
-      line-height: 2.2;
+    .juria-message {
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 7px;
+      background: var(--white);
+      font-size: 14px;
+      overflow-wrap: anywhere;
     }
 
-    .fuentes a {
-      color: #174d83;
+    .juria-input-area {
+      display: flex;
+      gap: 10px;
     }
+
+    .juria-input-area textarea {
+      min-height: 48px;
+      resize: vertical;
+    }
+
+    .juria-disclaimer {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 12px;
+    }
+
+    /* MATERIAS */
+
+    .materias-section,
+    .sources-section {
+      margin-top: 45px;
+    }
+
+    .materias-list {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 20px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* FUENTES */
+
+    .sources {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+
+    .source-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 20px;
+    }
+
+    .source-card h3 {
+      color: var(--navy);
+      margin-bottom: 8px;
+    }
+
+    /* PIE DE PÁGINA */
 
     footer {
-      margin-top: 50px;
+      background: var(--navy);
+      color: #dce5ef;
+      text-align: center;
+      padding: 25px 15px;
+      font-size: 13px;
     }
 
-    footer p {
-      font-size: 12px;
-      color: #d5deea;
+    /* RESPONSIVE */
+
+    @media (max-width: 800px) {
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .search-controls {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .search-controls input {
+        grid-column: 1 / -1;
+      }
     }
 
-    @media(max-width: 600px) {
-      .logo { font-size: 24px; }
-      .hero h1 { font-size: 26px; }
-      input, select, .tools button { width: 100%; }
-      nav { gap: 12px; }
+    @media (max-width: 520px) {
+      .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      nav {
+        gap: 13px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .search-controls {
+        grid-template-columns: 1fr;
+      }
+
+      .search-controls input {
+        grid-column: auto;
+      }
+
+      .juria-input-area {
+        flex-direction: column;
+      }
+
+      .sources {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 
 <body>
 
-<header>
-  <div class="logo">LEGISLATIVO <span>MX</span></div>
-  <p>INFORMACIÓN LEGISLATIVA NACIONAL</p>
-</header>
+  <!-- ENCABEZADO -->
 
-<nav>
-  <a href="#">Inicio</a>
-  <a href="#novedades">Novedades</a>
-  <a href="#materias">Materias jurídicas</a>
-  <a href="#fuentes">Fuentes oficiales</a>
-</nav>
+  <header>
+    <div class="container header-content">
+      <div class="logo">
+        LEGISLATIVO <span>MX</span>
+      </div>
 
-<section class="hero">
-  <h1>Las leyes cambian.<br>Tú debes estar informado.</h1>
-  <p>Consulta novedades legislativas, reformas y publicaciones oficiales de México desde una sola plataforma.</p>
-</section>
-
-<main id="novedades">
-
-  <h2 class="section-title">Monitor legislativo</h2>
-
-  <div id="juria-diagnostico">
-    Comprobando conexión con JURIA...
-  </div>
-
-  <div class="stats">
-    <div class="stat">
-      <strong id="stat-total">0</strong>
-      <span>Publicaciones encontradas</span>
+      <nav>
+        <a href="#inicio">Inicio</a>
+        <a href="#novedades">Novedades</a>
+        <a href="#juria">JURIA</a>
+        <a href="#materias">Materias jurídicas</a>
+        <a href="#fuentes">Fuentes oficiales</a>
+      </nav>
     </div>
-    <div class="stat">
-      <strong id="stat-identificadas">0</strong>
-      <span>Materias identificadas</span>
+  </header>
+
+  <!-- PORTADA -->
+
+  <section class="hero" id="inicio">
+    <div class="container">
+      <h1>Las leyes cambian. Tú debes estar informado.</h1>
+
+      <p>
+        Plataforma de monitoreo legislativo y jurídico de México.
+        Consulta publicaciones oficiales, identifica materias
+        jurídicas y mantente informado sobre los cambios normativos.
+      </p>
+
+      <div class="hero-line"></div>
     </div>
-    <div class="stat">
-      <strong id="stat-otras">0</strong>
-      <span>Otras publicaciones</span>
-    </div>
-    <div class="stat">
-      <strong id="stat-pendientes">0</strong>
-      <span>Pendientes de clasificación</span>
-    </div>
-  </div>
-
-  <div class="tools">
-    <input id="search" type="search" placeholder="Buscar leyes, reformas o temas...">
-    <select id="category">
-      <option value="todos">Todas las publicaciones</option>
-      <option value="otras">Otras publicaciones</option>
-      <option value="pendientes">Pendientes de clasificación</option>
-    </select>
-    <button id="search-button" type="button">BUSCAR</button>
-    <button id="refresh-button" type="button">ACTUALIZAR</button>
-  </div>
-
-  <div id="dof-status">
-    Preparando consulta del Diario Oficial de la Federación...
-  </div>
-
-  <div id="dof-results" class="news"></div>
-
-  <div class="notice">
-    Las clasificaciones de JURIA son orientativas y se basan en reglas de identificación textual. Deben verificarse con el documento oficial.
-  </div>
-
-  <section id="materias" class="materias">
-    <h2 class="section-title">Materias jurídicas</h2>
-    <p id="materias-list">Cargando catálogo jurídico...</p>
   </section>
 
-  <section id="fuentes" class="fuentes">
-    <h2 class="section-title">Fuentes oficiales</h2>
+  <!-- CONTENIDO PRINCIPAL -->
+
+  <main class="container">
+
+    <section id="novedades">
+
+      <h2 class="section-title">
+        Monitor del Diario Oficial de la Federación
+      </h2>
+
+      <p class="section-description">
+        Seguimiento de publicaciones oficiales y clasificación
+        jurídica orientativa.
+      </p>
+
+      <div class="diagnostico" id="juria-diagnostico">
+        Preparando los servicios de LEGISLATIVO MX...
+      </div>
+
+      <!-- ESTADÍSTICAS -->
+
+      <div class="stats">
+
+        <div class="stat-card">
+          <p>Total de publicaciones</p>
+          <strong id="stat-total">0</strong>
+        </div>
+
+        <div class="stat-card">
+          <p>Identificadas</p>
+          <strong id="stat-identificadas">0</strong>
+        </div>
+
+        <div class="stat-card">
+          <p>Otras publicaciones</p>
+          <strong id="stat-otras">0</strong>
+        </div>
+
+        <div class="stat-card">
+          <p>Pendientes de revisión</p>
+          <strong id="stat-pendientes">0</strong>
+        </div>
+
+      </div>
+
+      <!-- BUSCADOR -->
+
+      <div class="search-panel">
+
+        <h3 class="section-title">
+          Buscar publicaciones
+        </h3>
+
+        <div class="search-controls">
+
+          <input
+            type="search"
+            id="search"
+            placeholder="Buscar por título, dependencia o palabra clave..."
+            aria-label="Buscar publicaciones"
+          >
+
+          <select id="category" aria-label="Filtrar por materia">
+            <option value="todos">Todas las materias</option>
+            <option value="otras">Otras publicaciones</option>
+            <option value="pendientes">Pendientes de revisión</option>
+          </select>
+
+          <button id="search-button" type="button">
+            Buscar
+          </button>
+
+          <button id="refresh-button" type="button">
+            Actualizar
+          </button>
+
+        </div>
+
+      </div>
+
+      <p class="status" id="dof-status">
+        Preparando consulta del Diario Oficial de la Federación...
+      </p>
+
+      <div class="news" id="dof-results"></div>
+
+      <p class="juria-disclaimer">
+        La clasificación automática es orientativa y no sustituye
+        la revisión jurídica de las publicaciones oficiales.
+      </p>
+
+    </section>
+
+    <!-- ASISTENTE JURIA -->
+
+    <section class="juria-section" id="juria">
+
+      <div class="juria-panel">
+
+        <div class="juria-header">
+          <h2>JURIA</h2>
+
+          <p>
+            Asistente de inteligencia jurídica de LEGISLATIVO MX
+          </p>
+        </div>
+
+        <div class="juria-content">
+
+          <p class="juria-status" id="juria-status">
+            Asistente preparado para configuración.
+          </p>
+
+          <div
+            class="juria-messages"
+            id="juria-messages"
+            aria-live="polite"
+          >
+            <div class="juria-message">
+              <strong>JURIA:</strong>
+              <p>
+                Hola. Soy JURIA, el asistente jurídico de
+                LEGISLATIVO MX. Mi integración se encuentra
+                en preparación.
+              </p>
+            </div>
+          </div>
+
+          <div class="juria-input-area">
+
+            <textarea
+              id="juria-input"
+              placeholder="Escribe tu consulta jurídica..."
+              aria-label="Escribe tu consulta para JURIA"
+            ></textarea>
+
+            <button id="juria-send" type="button">
+              Enviar
+            </button>
+
+          </div>
+
+          <p class="juria-disclaimer">
+            Las respuestas automatizadas deberán verificarse
+            con las fuentes jurídicas oficiales. JURIA no
+            sustituye la asesoría de un profesional del Derecho.
+          </p>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- CATÁLOGO DE MATERIAS -->
+
+    <section class="materias-section" id="materias">
+
+      <h2 class="section-title">
+        Catálogo de materias jurídicas
+      </h2>
+
+      <p class="section-description">
+        Materias disponibles para organizar y clasificar
+        las publicaciones jurídicas.
+      </p>
+
+      <div
+        class="materias-list"
+        id="materias-list"
+      >
+        Cargando catálogo jurídico...
+      </div>
+
+    </section>
+
+    <!-- FUENTES OFICIALES -->
+
+    <section class="sources-section" id="fuentes">
+
+      <h2 class="section-title">
+        Fuentes oficiales
+      </h2>
+
+      <p class="section-description">
+        Consulta directamente los servicios y publicaciones
+        oficiales del Gobierno de México.
+      </p>
+
+      <div class="sources">
+
+        <div class="source-card">
+          <h3>Diario Oficial de la Federación</h3>
+
+          <p>
+            Publicaciones oficiales, leyes, decretos,
+            acuerdos y disposiciones generales.
+          </p>
+
+          <a
+            href="https://www.dof.gob.mx/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Consultar DOF
+          </a>
+        </div>
+
+        <div class="source-card">
+          <h3>Sistema de Información del DOF</h3>
+
+          <p>
+            Servicio de datos abiertos para consultar
+            información del Diario Oficial.
+          </p>
+
+          <a
+            href="https://sidof.segob.gob.mx/datos_abiertos"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Consultar SIDOF
+          </a>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- PIE DE PÁGINA -->
+
+  <footer>
     <p>
-      <a href="https://www.dof.gob.mx/" target="_blank" rel="noopener noreferrer">
-        Diario Oficial de la Federación
-      </a>
+      LEGISLATIVO MX | Plataforma de monitoreo legislativo
+      de México.
     </p>
+
     <p>
-      <a href="https://sidof.segob.gob.mx/datos_abiertos" target="_blank" rel="noopener noreferrer">
-        Datos abiertos del SIDOF
-      </a>
+      Información orientativa. Consulta siempre las fuentes oficiales.
     </p>
-  </section>
+  </footer>
 
-</main>
+  <!-- ARCHIVOS JAVASCRIPT -->
 
-<footer>
-  LEGISLATIVO MX © 2026
-  <p>Información legislativa de México</p>
-</footer>
+  <script src="./catalogo-juridico.js"></script>
+  <script src="./dof.js"></script>
+  <script src="./juria.js"></script>
 
-<script src="./catalogo-juridico.js"></script>
-<script src="./dof.js?v=12"></script>
+  <!-- SERVICE WORKER -->
 
-<script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=4")
-      .then(() => console.log("Service Worker registrado"))
-      .catch(error => console.error("Error del Service Worker:", error));
-  });
-}
-</script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js")
+          .then(registration => {
+            console.log(
+              "Service Worker registrado:",
+              registration.scope
+            );
+          })
+          .catch(error => {
+            console.error(
+              "Error al registrar Service Worker:",
+              error
+            );
+          });
+      });
+    }
+  </script>
 
 </body>
 </html>
